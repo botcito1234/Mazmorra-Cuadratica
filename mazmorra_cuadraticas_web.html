@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Mazmorra de las Cuadráticas</title>
+
+<!-- Las fuentes se cargan por <link> (no por @import) para no bloquear el render.
+     Si el aula no tiene internet, los fallbacks de --fuente-* mantienen el diseño legible. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@600&display=swap">
+
+<style>
+  :root{
+    --stone-dark:#161320;
+    --stone:#211c30;
+    --stone-light:#2e2740;
+    --gold:#e8b84b;
+    --gold-dim:#8a6a2a;
+    --ember:#d9552e;
+    --blood:#c23b3b;
+    --blood-texto:#f5998c;   /* rojo legible: 7.7:1 sobre el panel (WCAG AA) */
+    --moss:#4fae8f;
+    --parchment:#f3e9d2;
+    --humo:#8f84ad;          /* gris legible: 5.3:1 sobre el fondo */
+
+    --fuente-titulo:'Cinzel', Georgia, 'Times New Roman', serif;
+    --fuente-texto:'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+    --fuente-mono:'JetBrains Mono', Consolas, 'Courier New', monospace;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html{ background:var(--stone-dark); }
+
+  body{
+    margin:0; padding:24px; min-height:100vh;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(232,184,75,0.06), transparent 40%),
+      radial-gradient(ellipse at 80% 90%, rgba(217,85,46,0.07), transparent 45%),
+      var(--stone-dark);
+    font-family:var(--fuente-texto);
+    color:var(--parchment);
+    display:flex;
+    justify-content:center;
+    /* "safe" evita que la parte superior quede cortada e inalcanzable
+       cuando el panel es más alto que la pantalla (móviles). */
+    align-items:safe center;
+  }
+
+  #app{ width:100%; max-width:640px; }
+
+  .marco{
+    background:linear-gradient(180deg, var(--stone) 0%, var(--stone-dark) 100%);
+    border:3px solid var(--gold-dim);
+    border-radius:6px;
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.6),
+      0 20px 60px rgba(0,0,0,0.6),
+      inset 0 0 40px rgba(0,0,0,0.5);
+    padding:36px 32px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .marco::before{
+    content:"";
+    position:absolute; inset:8px;
+    border:1px solid rgba(232,184,75,0.18);
+    border-radius:3px;
+    pointer-events:none;
+  }
+
+  h1.titulo{
+    font-family:var(--fuente-titulo);
+    font-weight:800;
+    font-size:1.9rem;
+    text-align:center;
+    color:var(--gold);
+    letter-spacing:0.03em;
+    margin:0 0 6px 0;
+    text-shadow:0 0 18px rgba(232,184,75,0.35);
+  }
+
+  .subtitulo{
+    text-align:center;
+    color:#b8aecb;
+    font-size:0.95rem;
+    font-style:italic;
+    margin:0 0 26px 0;
+  }
+
+  .torch-row{ text-align:center; font-size:1.4rem; margin-bottom:18px; letter-spacing:6px; }
+
+  p.lore{
+    line-height:1.65;
+    font-size:0.98rem;
+    color:#d9cfe8;
+    text-align:center;
+  }
+
+  .btn{
+    font-family:var(--fuente-titulo);
+    font-weight:700;
+    font-size:1rem;
+    letter-spacing:0.04em;
+    display:block;
+    width:100%;
+    padding:14px 20px;
+    margin-top:22px;
+    background:linear-gradient(180deg, #f0c665, var(--gold-dim));
+    color:#241c0c;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+    box-shadow:0 4px 0 #6b5019, 0 8px 16px rgba(0,0,0,0.4);
+    transition:transform 0.08s ease, filter 0.15s ease, opacity 0.15s ease;
+  }
+  .btn:hover:not(:disabled){ filter:brightness(1.06); }
+  .btn:active:not(:disabled){ transform:translateY(3px); box-shadow:0 1px 0 #6b5019; }
+  .btn:focus-visible{ outline:3px solid var(--parchment); outline-offset:3px; }
+  .btn:disabled{ opacity:0.5; cursor:not-allowed; }
+
+  .btn.secundario{
+    background:linear-gradient(180deg, #4a4160, #2e2740);
+    color:var(--parchment);
+    box-shadow:0 4px 0 #171226, 0 8px 16px rgba(0,0,0,0.4);
+  }
+
+  .btn.peligro{
+    background:linear-gradient(180deg, #e0654a, var(--blood));
+    color:#2a0a0a;
+    box-shadow:0 4px 0 #6e1f1f, 0 8px 16px rgba(0,0,0,0.4);
+  }
+
+  .hud{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:18px; font-size:0.9rem; color:#c9bfdb;
+  }
+
+  .sala-label{
+    font-family:var(--fuente-titulo); color:var(--gold);
+    font-weight:700; letter-spacing:0.05em;
+  }
+
+  .vidas{ font-size:1.15rem; letter-spacing:3px; }
+
+  .panel-ecuacion{
+    background:linear-gradient(180deg, #1c1728, #14101e);
+    border:1px solid rgba(232,184,75,0.25);
+    border-radius:6px;
+    padding:26px 18px;
+    text-align:center;
+    margin:18px 0;
+    box-shadow:inset 0 0 25px rgba(0,0,0,0.5);
+  }
+
+  .ecuacion-texto{
+    font-family:var(--fuente-mono);
+    font-size:1.5rem;
+    color:var(--parchment);
+    letter-spacing:0.03em;
+  }
+
+  .instruccion{
+    text-align:center;
+    color:#b8aecb;
+    font-size:0.9rem;
+    margin:0 0 14px 0;
+    line-height:1.5;
+  }
+
+  /* ---- Dos casillas, una por raíz ---- */
+  .raices-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  .raiz-campo{ display:flex; flex-direction:column; gap:6px; }
+  .raiz-label{
+    display:block;
+    font-family:var(--fuente-titulo);
+    font-size:0.8rem;
+    font-weight:700;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--gold);
+    text-align:center;
+  }
+
+  input.campo{
+    width:100%;
+    padding:13px 14px;
+    font-family:var(--fuente-mono);
+    font-size:1.15rem;
+    text-align:center;
+    background:#0f0c17;
+    border:2px solid var(--gold-dim);
+    border-radius:5px;
+    color:var(--parchment);
+    outline:none;
+  }
+  input.campo::placeholder{ color:#6b6188; }
+  input.campo:focus{ border-color:var(--gold); box-shadow:0 0 0 3px rgba(232,184,75,0.25); }
+  input.campo:disabled{ opacity:0.55; }
+
+  .nota-orden{
+    text-align:center;
+    color:var(--humo);
+    font-size:0.8rem;
+    margin:10px 0 0 0;
+  }
+  .nota-fina{ font-size:0.8rem; color:var(--humo); }
+
+  .temporizador-wrap{
+    margin-top:16px;
+    height:8px;
+    background:#0f0c17;
+    border-radius:4px;
+    overflow:hidden;
+    border:1px solid rgba(232,184,75,0.2);
+  }
+  .temporizador-barra{
+    height:100%;
+    background:linear-gradient(90deg, var(--moss), var(--gold));
+    width:100%;
+    transition:width 1s linear;
+  }
+  .temporizador-barra.critico{
+    background:linear-gradient(90deg, var(--ember), var(--blood));
+  }
+  .temporizador-texto{ text-align:center; font-size:0.8rem; color:#a89bc2; margin-top:6px; }
+
+  .puntaje{ text-align:center; color:var(--moss); font-size:0.85rem; margin-top:4px; }
+
+  .mensaje{
+    text-align:center; font-size:0.9rem; margin-top:14px; min-height:22px; line-height:1.5;
+  }
+  .mensaje.error{ color:var(--blood-texto); }
+  .mensaje.ok{ color:var(--moss); }
+
+  .boss-titulo{
+    font-family:var(--fuente-titulo); text-align:center; color:var(--blood);
+    font-size:1.3rem; letter-spacing:0.04em; margin-bottom:10px;
+    text-shadow:0 0 16px rgba(194,59,59,0.45);
+  }
+
+  .fase-badge{
+    display:inline-block; margin:0 auto 12px auto;
+    background:rgba(194,59,59,0.15);
+    border:1px solid rgba(194,59,59,0.4);
+    color:#f0a394;
+    font-size:0.78rem;
+    padding:4px 12px;
+    border-radius:20px;
+  }
+  .centro{ text-align:center; }
+
+  .resultado-titulo{
+    font-family:var(--fuente-titulo); font-size:2rem; text-align:center;
+    margin-bottom:8px;
+  }
+  .resultado-titulo.victoria{ color:var(--gold); text-shadow:0 0 20px rgba(232,184,75,0.5); }
+  .resultado-titulo.derrota{ color:var(--blood-texto); text-shadow:0 0 20px rgba(194,59,59,0.4); }
+
+  .estadistica{ text-align:center; color:var(--parchment); font-size:1.05rem; margin-top:6px; }
+
+  footer.creditos{
+    text-align:center; color:var(--humo); font-size:0.75rem; margin-top:18px;
+  }
+
+  @media (max-width:380px){
+    .marco{ padding:26px 18px; }
+    .raices-grid{ gap:10px; }
+    h1.titulo{ font-size:1.5rem; }
+    .ecuacion-texto{ font-size:1.25rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition-duration:0.01ms !important; animation-duration:0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="marco" id="marco"></div>
+  <footer class="creditos">Festival Regional de la Matemática · UGEL Huancayo · Eje 2</footer>
+</div>
+
+<script>
+'use strict';
+
+const VIDAS_INICIALES = 3;
+
+/* Cada sala define su propio rango de raíces Y su propio tiempo.
+   Antes el rango crecía (hasta ±13, con c = 169) pero el tiempo seguía fijo en 40 s. */
+const CONFIG_SALAS = [
+  { rango:5,  tiempo:45 },
+  { rango:6,  tiempo:45 },
+  { rango:8,  tiempo:50 },
+  { rango:9,  tiempo:55 },
+  { rango:11, tiempo:60 },
+];
+const TOTAL_SALAS = CONFIG_SALAS.length;
+
+const TIEMPO_BOSS = 90;   // segundos por fase del jefe. Poner 0 para quitarle el reloj.
+const TOLERANCIA  = 0.05; // margen aceptado al redondear las raíces del jefe a 2 decimales.
+
+let estado = {
+  nivel: 0,
+  vidas: VIDAS_INICIALES,
+  puntaje: 0,
+  tiempoRestante: 0,
+  temporizadorId: null,
+  transicionId: null,   // setTimeout entre pantallas: hay que poder cancelarlo
+  bloqueado: false,     // impide que un doble clic descuente dos vidas
+  ecuacion: null,
+  faseBoss: 1,
+};
+
+const marco = document.getElementById('marco');
+
+// ---------- utilidades ----------
+
+function elegir(lista){ return lista[Math.floor(Math.random()*lista.length)]; }
+
+function aleatorioDistintoDeCero(min, max){
+  let n;
+  do { n = Math.floor(Math.random()*(max-min+1))+min; } while(n===0);
+  return n;
+}
+
+/* Acepta "−3" (signo menos tipográfico) y "1,5" (coma decimal).
+   Rechaza lo que Number() dejaba pasar en silencio: "", "0x10", "1e3", "Infinity". */
+function parseNumero(texto){
+  const limpio = String(texto).trim()
+    .replace(/[−–—]/g, '-')
+    .replace(',', '.');
+  if(!/^[+-]?(\d+(\.\d*)?|\.\d+)$/.test(limpio)) return null;
+  return Number(limpio);
+}
+
+function detenerTodo(){
+  if(estado.temporizadorId){ clearInterval(estado.temporizadorId); estado.temporizadorId = null; }
+  if(estado.transicionId){ clearTimeout(estado.transicionId); estado.transicionId = null; }
+}
+
+function bloquearControles(){
+  marco.querySelectorAll('input, button').forEach(function(el){ el.disabled = true; });
+}
+
+function mostrarError(el, texto){
+  if(!el) return;
+  el.className = 'mensaje error';
+  el.textContent = texto;
+}
+
+function iniciarTemporizador(segundos, alAgotarse){
+  if(!segundos) return;
+  estado.tiempoRestante = segundos;
+  estado.temporizadorId = setInterval(function(){
+    estado.tiempoRestante -= 1;
+    const restante = Math.max(0, estado.tiempoRestante);
+    const barra = document.getElementById('barraTiempo');
+    const texto = document.getElementById('textoTiempo');
+    if(barra){
+      barra.style.width = (restante/segundos)*100 + '%';
+      barra.classList.toggle('critico', restante <= 10);
+    }
+    if(texto) texto.textContent = '⏱ Tiempo: ' + restante + 's';
+    if(estado.tiempoRestante <= 0){ detenerTodo(); alAgotarse(); }
+  }, 1000);
+}
+
+// ---------- generación de ecuaciones ----------
+
+/* Se construye desde las raíces, así siempre son enteras.
+   r1 !== r2 garantiza que las dos casillas siempre tengan sentido. */
+function generarEcuacionNormal(nivel){
+  const rango = CONFIG_SALAS[nivel-1].rango;
+  const r1 = aleatorioDistintoDeCero(-rango, rango);
+  let r2;
+  do { r2 = aleatorioDistintoDeCero(-rango, rango); } while(r2 === r1);
+  return {
+    a: 1,
+    b: -(r1+r2),
+    c: r1*r2,
+    raices: [r1, r2].sort(function(x,y){ return x-y; }),
+  };
+}
+
+/* El jefe exige discriminante POSITIVO: con Δ < 0 no hay raíces reales y
+   la fase 2 era matemáticamente imposible de responder. */
+function generarEcuacionBoss(){
+  const aOpc = [2,3];
+  const bOpc = [-7,-5,5,7,9];
+  const cOpc = [-6,-4,-3,3,4];
+  let a, b, c, discriminante;
+  do {
+    a = elegir(aOpc); b = elegir(bOpc); c = elegir(cOpc);
+    discriminante = b*b - 4*a*c;
+  } while(discriminante <= 0);
+  return {a:a, b:b, c:c, discriminante:discriminante};
+}
+
+function formatoEcuacion(a, b, c){
+  let texto = (a === 1 ? '' : a) + 'x²';
+  if(b !== 0) texto += '  ' + (b >= 0 ? '+' : '−') + '  ' + Math.abs(b) + 'x';
+  if(c !== 0) texto += '  ' + (c >= 0 ? '+' : '−') + '  ' + Math.abs(c);
+  return texto + '  =  0';
+}
+
+// Versión hablada, para lectores de pantalla (que leerían "x²" como "x2").
+function ecuacionEnPalabras(a, b, c){
+  let t = (a === 1 ? '' : a + ' ') + 'x al cuadrado';
+  if(b !== 0) t += (b > 0 ? ' más ' : ' menos ') + Math.abs(b) + ' x';
+  if(c !== 0) t += (c > 0 ? ' más ' : ' menos ') + Math.abs(c);
+  return t + ' igual a cero';
+}
+
+// ---------- fragmentos de interfaz ----------
+
+function htmlVidas(){
+  const llenos = '❤️'.repeat(Math.max(0, estado.vidas));
+  const vacios = '🖤'.repeat(Math.max(0, VIDAS_INICIALES - estado.vidas));
+  return '<span class="vidas" role="img" aria-label="Vidas restantes: ' +
+    estado.vidas + ' de ' + VIDAS_INICIALES + '">' + llenos + vacios + '</span>';
+}
+
+function htmlEcuacion(eq){
+  return '<div class="panel-ecuacion">' +
+    '<div class="ecuacion-texto" role="math" aria-label="' +
+      ecuacionEnPalabras(eq.a, eq.b, eq.c) + '">' +
+      formatoEcuacion(eq.a, eq.b, eq.c) +
+    '</div></div>';
+}
+
+function htmlRaices(){
+  return '' +
+    '<div class="raices-grid">' +
+      '<div class="raiz-campo">' +
+        '<label class="raiz-label" for="raiz1">Una raíz</label>' +
+        '<input type="text" class="campo" id="raiz1" inputmode="text" autocomplete="off" placeholder="?">' +
+      '</div>' +
+      '<div class="raiz-campo">' +
+        '<label class="raiz-label" for="raiz2">La otra raíz</label>' +
+        '<input type="text" class="campo" id="raiz2" inputmode="text" autocomplete="off" placeholder="?">' +
+      '</div>' +
+    '</div>' +
+    '<p class="nota-orden">El orden no importa: da igual cuál escribas primero.</p>';
+}
+
+function htmlTemporizador(segundos){
+  if(!segundos) return '';
+  return '<div class="temporizador-wrap" aria-hidden="true">' +
+    '<div class="temporizador-barra" id="barraTiempo"></div></div>' +
+    '<div class="temporizador-texto" id="textoTiempo">⏱ Tiempo: ' + segundos + 's</div>';
+}
+
+// Enter en la primera casilla salta a la segunda; Enter en la segunda envía.
+function conectarRaices(alEnviar){
+  const r1 = document.getElementById('raiz1');
+  const r2 = document.getElementById('raiz2');
+  r1.focus();
+  r1.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); r2.focus(); }
+  });
+  r2.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); alEnviar(); }
+  });
+}
+
+function leerRaices(){
+  const t1 = document.getElementById('raiz1').value.trim();
+  const t2 = document.getElementById('raiz2').value.trim();
+  if(t1 === '' || t2 === ''){
+    return { error:'Completa las dos casillas antes de confirmar.' };
+  }
+  const v1 = parseNumero(t1);
+  const v2 = parseNumero(t2);
+  if(v1 === null || v2 === null){
+    return { error:'Escribe solo números. Ejemplos válidos: 4    −3    1.5' };
+  }
+  // Se ordenan: así el orden que use el jugador es indiferente.
+  return { valores:[v1, v2].sort(function(x,y){ return x-y; }) };
+}
+
+// ---------- pantallas ----------
+
+function pantallaInicio(){
+  detenerTodo();
+  marco.innerHTML =
+    '<div class="torch-row">🏰</div>' +
+    '<h1 class="titulo">LA MAZMORRA DE LAS CUADRÁTICAS</h1>' +
+    '<p class="subtitulo">Un desafío de ' + TOTAL_SALAS + ' salas + un Jefe Final</p>' +
+    '<p class="lore">' +
+      'Debes atravesar ' + TOTAL_SALAS + ' salas resolviendo ecuaciones cuadráticas. ' +
+      'Cada sala es más difícil que la anterior, pero también te da más tiempo. ' +
+      'Al final te espera un <strong>JEFE FINAL</strong> con una ecuación temible.' +
+      '<br><br>' +
+      'Cada ecuación tiene <strong>dos raíces distintas</strong>: escribe una en cada ' +
+      'casilla, en el orden que quieras.' +
+      '<br><br>' +
+      'Tienes ' + VIDAS_INICIALES + ' vidas ❤️❤️❤️. ¡Piérdelas todas y la mazmorra gana!' +
+    '</p>' +
+    '<button class="btn" id="btnComenzar">⚔️  Comenzar aventura</button>';
+  document.getElementById('btnComenzar').onclick = iniciarJuego;
+}
+
+function iniciarJuego(){
+  detenerTodo();
+  estado.nivel = 1;
+  estado.vidas = VIDAS_INICIALES;
+  estado.puntaje = 0;
+  pantallaSala();
+}
+
+function pantallaSala(){
+  detenerTodo();
+  if(estado.nivel > TOTAL_SALAS){ pantallaBoss(); return; }
+
+  const config = CONFIG_SALAS[estado.nivel-1];
+  estado.ecuacion = generarEcuacionNormal(estado.nivel);
+  estado.bloqueado = false;
+
+  marco.innerHTML =
+    '<div class="hud">' +
+      '<span class="sala-label">🚪 SALA ' + estado.nivel + ' / ' + TOTAL_SALAS + '</span>' +
+      htmlVidas() +
+    '</div>' +
+    '<div class="puntaje">Puntaje: ' + estado.puntaje + '</div>' +
+    htmlEcuacion(estado.ecuacion) +
+    '<p class="instruccion">Encuentra las dos raíces y escribe una en cada casilla.</p>' +
+    htmlRaices() +
+    '<button class="btn" id="btnConfirmar">Confirmar respuesta</button>' +
+    '<div class="mensaje" id="mensaje" role="status" aria-live="polite"></div>' +
+    htmlTemporizador(config.tiempo);
+
+  conectarRaices(verificarSala);
+  document.getElementById('btnConfirmar').onclick = verificarSala;
+  iniciarTemporizador(config.tiempo, function(){ perderVida('¡Se acabó el tiempo!'); });
+}
+
+function verificarSala(){
+  if(estado.bloqueado) return;
+
+  const mensaje = document.getElementById('mensaje');
+  const lectura = leerRaices();
+  if(lectura.error){ mostrarError(mensaje, lectura.error); return; }
+
+  const dadas = lectura.valores;
+  const correctas = estado.ecuacion.raices;
+
+  if(dadas[0] === correctas[0] && dadas[1] === correctas[1]){
+    estado.bloqueado = true;
+    detenerTodo();
+    bloquearControles();
+    estado.puntaje += 100 + Math.max(0, estado.tiempoRestante)*2;
+    mensaje.className = 'mensaje ok';
+    mensaje.textContent = '¡Correcto! La puerta se abre…';
+    estado.transicionId = setTimeout(function(){
+      estado.nivel += 1;
+      pantallaSala();
+    }, 900);
+  } else {
+    perderVida('Respuesta incorrecta.');
+  }
+}
+
+function perderVida(motivo){
+  if(estado.bloqueado) return;
+  estado.bloqueado = true;
+  detenerTodo();
+  bloquearControles();
+
+  estado.vidas -= 1;
+  if(estado.vidas <= 0){ pantallaDerrota(); return; }
+
+  const r = estado.ecuacion.raices;
+  mostrarError(document.getElementById('mensaje'),
+    motivo + ' Pierdes una vida, te quedan ' + estado.vidas +
+    '. Las raíces eran ' + r[0] + ' y ' + r[1] + '.');
+
+  estado.transicionId = setTimeout(pantallaSala, 2800);
+}
+
+// ---------- Jefe final ----------
+
+function pantallaBoss(){
+  detenerTodo();
+  estado.ecuacion = generarEcuacionBoss();
+  estado.faseBoss = 1;
+  renderBoss();
+}
+
+function renderBoss(){
+  detenerTodo();
+  estado.bloqueado = false;
+
+  const eq = estado.ecuacion;
+  const fase1 = estado.faseBoss === 1;
+
+  const bloqueRespuesta = fase1
+    ? '<p class="instruccion">Calcula el <strong>discriminante</strong>: Δ = b² − 4ac</p>' +
+      '<label class="raiz-label" for="campoDisc">Valor de Δ</label>' +
+      '<input type="text" class="campo" id="campoDisc" inputmode="text" autocomplete="off" placeholder="?" style="margin-top:6px">'
+    : '<p class="instruccion">Calcula las dos raíces con la fórmula general.<br>' +
+      '<span class="nota-fina">Redondea a 2 decimales. Ejemplo: 1.5 y −2.33</span></p>' +
+      htmlRaices();
+
+  marco.innerHTML =
+    '<div class="boss-titulo">👹 SALA FINAL: EL JEFE DE LAS CUADRÁTICAS 👹</div>' +
+    '<div class="centro" style="margin-bottom:14px;">' + htmlVidas() + '</div>' +
+    htmlEcuacion(eq) +
+    '<div class="centro"><span class="fase-badge">FASE ' + estado.faseBoss + ' de 2</span></div>' +
+    bloqueRespuesta +
+    '<button class="btn peligro" id="btnAtacar">⚔️ Atacar con la respuesta</button>' +
+    '<div class="mensaje" id="mensaje" role="status" aria-live="polite"></div>' +
+    htmlTemporizador(TIEMPO_BOSS);
+
+  if(fase1){
+    const campo = document.getElementById('campoDisc');
+    campo.focus();
+    campo.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ e.preventDefault(); verificarBoss(); }
+    });
+  } else {
+    conectarRaices(verificarBoss);
+  }
+  document.getElementById('btnAtacar').onclick = verificarBoss;
+  iniciarTemporizador(TIEMPO_BOSS, function(){ perderVidaBoss('¡Se acabó el tiempo!'); });
+}
+
+function verificarBoss(){
+  if(estado.bloqueado) return;
+
+  const eq = estado.ecuacion;
+  const disc = eq.discriminante;
+  const mensaje = document.getElementById('mensaje');
+
+  // --- Fase 1: discriminante ---
+  if(estado.faseBoss === 1){
+    const texto = document.getElementById('campoDisc').value.trim();
+    if(texto === ''){ mostrarError(mensaje, 'Escribe el valor de Δ antes de atacar.'); return; }
+
+    const respuesta = parseNumero(texto);
+    if(respuesta === null){ mostrarError(mensaje, 'Escribe solo un número. Ejemplo: 25'); return; }
+
+    if(respuesta === disc){
+      estado.bloqueado = true;
+      detenerTodo();
+      bloquearControles();
+      mensaje.className = 'mensaje ok';
+      mensaje.textContent = '¡Δ = ' + disc + ' es correcto! El jefe se tambalea…';
+      estado.transicionId = setTimeout(function(){ estado.faseBoss = 2; renderBoss(); }, 1200);
+    } else {
+      perderVidaBoss('Discriminante incorrecto.');
+    }
+    return;
+  }
+
+  // --- Fase 2: raíces por fórmula general ---
+  const lectura = leerRaices();
+  if(lectura.error){ mostrarError(mensaje, lectura.error); return; }
+
+  const raizDisc = Math.sqrt(disc);
+  const correctas = [
+    (-eq.b - raizDisc)/(2*eq.a),
+    (-eq.b + raizDisc)/(2*eq.a),
+  ].sort(function(p,q){ return p-q; });
+  const dadas = lectura.valores;
+
+  const ok = Math.abs(dadas[0]-correctas[0]) <= TOLERANCIA &&
+             Math.abs(dadas[1]-correctas[1]) <= TOLERANCIA;
+
+  if(ok){
+    estado.bloqueado = true;
+    detenerTodo();
+    estado.puntaje += 500 + Math.max(0, estado.tiempoRestante)*2;
+    pantallaVictoria();
+  } else {
+    perderVidaBoss('Raíces incorrectas.');
+  }
+}
+
+function perderVidaBoss(motivo){
+  if(estado.bloqueado) return;
+  estado.bloqueado = true;
+  detenerTodo();
+  bloquearControles();
+
+  estado.vidas -= 1;
+  if(estado.vidas <= 0){ pantallaDerrota(); return; }
+
+  mostrarError(document.getElementById('mensaje'),
+    motivo + ' Te quedan ' + estado.vidas + ' vidas. Vuelve a intentarlo.');
+
+  estado.transicionId = setTimeout(renderBoss, 2400);
+}
+
+// ---------- pantallas finales ----------
+
+function pantallaVictoria(){
+  detenerTodo();
+  marco.innerHTML =
+    '<div class="resultado-titulo victoria">🏆 ¡VICTORIA! 🏆</div>' +
+    '<p class="lore">Derrotaste al Jefe de las Cuadráticas.</p>' +
+    '<div class="estadistica">Puntaje final: ' +
+      '<strong style="color:var(--gold)">' + estado.puntaje + '</strong></div>' +
+    '<button class="btn" id="btnJugar">Jugar de nuevo</button>' +
+    '<button class="btn secundario" id="btnInicio">Volver al inicio</button>';
+  document.getElementById('btnJugar').onclick = iniciarJuego;
+  document.getElementById('btnInicio').onclick = pantallaInicio;
+}
+
+function pantallaDerrota(){
+  detenerTodo();
+  const donde = estado.nivel > TOTAL_SALAS ? 'el Jefe Final' : ('la Sala ' + estado.nivel);
+  marco.innerHTML =
+    '<div class="resultado-titulo derrota">💀 La mazmorra te ha vencido 💀</div>' +
+    '<p class="lore">Llegaste hasta: ' + donde + '</p>' +
+    '<div class="estadistica">Puntaje obtenido: ' +
+      '<strong style="color:var(--moss)">' + estado.puntaje + '</strong></div>' +
+    '<button class="btn" id="btnJugar">Intentar de nuevo</button>' +
+    '<button class="btn secundario" id="btnInicio">Volver al inicio</button>';
+  document.getElementById('btnJugar').onclick = iniciarJuego;
+  document.getElementById('btnInicio').onclick = pantallaInicio;
+}
+
+pantallaInicio();
+</script>
+</body>
+</html>
