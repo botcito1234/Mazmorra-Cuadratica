@@ -2,733 +2,1489 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>La Mazmorra de las Cuadráticas</title>
-
-<!-- Las fuentes se cargan por <link> (no por @import) para no bloquear el render.
-     Si el aula no tiene internet, los fallbacks de --fuente-* mantienen el diseño legible. -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@600&display=swap">
-
 <style>
-  :root{
-    --stone-dark:#161320;
-    --stone:#211c30;
-    --stone-light:#2e2740;
-    --gold:#e8b84b;
-    --gold-dim:#8a6a2a;
-    --ember:#d9552e;
-    --blood:#c23b3b;
-    --blood-texto:#f5998c;   /* rojo legible: 7.7:1 sobre el panel (WCAG AA) */
-    --moss:#4fae8f;
-    --parchment:#f3e9d2;
-    --humo:#8f84ad;          /* gris legible: 5.3:1 sobre el fondo */
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
-    --fuente-titulo:'Cinzel', Georgia, 'Times New Roman', serif;
-    --fuente-texto:'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
-    --fuente-mono:'JetBrains Mono', Consolas, 'Courier New', monospace;
+  :root{
+    --stone-dark:#14111e;
+    --stone:#1e1a2b;
+    --stone-light:#2a2438;
+    --stone-lighter:#37304a;
+    --gold:#e8b84b;
+    --gold-bright:#f7d787;
+    --gold-dim:#8a6a2a;
+    --p1:#e0632f;
+    --p1-dim:#5c3220;
+    --p2:#3fb896;
+    --p2-dim:#204a3e;
+    --blood:#d9403f;
+    --parchment:#f3e9d2;
+    --parchment-dim:#c9bd9e;
+    --ink:#221c2f;
   }
 
   *{ box-sizing:border-box; }
-
-  html{ background:var(--stone-dark); }
+  html,body{ margin:0; padding:0; }
 
   body{
-    margin:0; padding:24px; min-height:100vh;
+    min-height:100vh;
     background:
-      radial-gradient(ellipse at 20% 10%, rgba(232,184,75,0.06), transparent 40%),
-      radial-gradient(ellipse at 80% 90%, rgba(217,85,46,0.07), transparent 45%),
+      radial-gradient(ellipse 900px 500px at 15% -5%, rgba(224,99,47,0.10), transparent 55%),
+      radial-gradient(ellipse 900px 500px at 85% 105%, rgba(63,184,150,0.10), transparent 55%),
       var(--stone-dark);
-    font-family:var(--fuente-texto);
+    font-family:'Inter', sans-serif;
     color:var(--parchment);
-    display:flex;
-    justify-content:center;
-    /* "safe" evita que la parte superior quede cortada e inalcanzable
-       cuando el panel es más alto que la pantalla (móviles). */
-    align-items:safe center;
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+    -webkit-tap-highlight-color:transparent;
   }
 
-  #app{ width:100%; max-width:640px; }
+  #app{ width:100%; max-width:720px; }
 
   .marco{
     background:linear-gradient(180deg, var(--stone) 0%, var(--stone-dark) 100%);
     border:3px solid var(--gold-dim);
-    border-radius:6px;
+    border-radius:10px;
     box-shadow:
-      0 0 0 1px rgba(0,0,0,0.6),
-      0 20px 60px rgba(0,0,0,0.6),
-      inset 0 0 40px rgba(0,0,0,0.5);
-    padding:36px 32px;
+      0 0 0 1px rgba(0,0,0,0.5),
+      0 24px 70px rgba(0,0,0,0.55),
+      inset 0 0 50px rgba(0,0,0,0.4);
+    padding:34px 30px;
     position:relative;
     overflow:hidden;
   }
-
   .marco::before{
     content:"";
     position:absolute; inset:8px;
     border:1px solid rgba(232,184,75,0.18);
-    border-radius:3px;
+    border-radius:6px;
     pointer-events:none;
   }
 
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--gold-dim); text-align:center; margin-bottom:6px;
+  }
+
   h1.titulo{
-    font-family:var(--fuente-titulo);
+    font-family:'Cinzel', serif;
     font-weight:800;
-    font-size:1.9rem;
+    font-size:clamp(22px, 5.2vw, 32px);
     text-align:center;
-    color:var(--gold);
-    letter-spacing:0.03em;
-    margin:0 0 6px 0;
-    text-shadow:0 0 18px rgba(232,184,75,0.35);
+    color:var(--gold-bright);
+    margin:0 0 4px;
+    letter-spacing:.01em;
+    text-shadow:0 2px 12px rgba(232,184,75,0.25);
   }
 
   .subtitulo{
-    text-align:center;
-    color:#b8aecb;
-    font-size:0.95rem;
-    font-style:italic;
-    margin:0 0 26px 0;
+    text-align:center; color:var(--parchment-dim);
+    font-size:14px; margin-bottom:26px;
   }
 
-  .torch-row{ text-align:center; font-size:1.4rem; margin-bottom:18px; letter-spacing:6px; }
-
-  p.lore{
-    line-height:1.65;
-    font-size:0.98rem;
-    color:#d9cfe8;
-    text-align:center;
+  /* ---- MENU DE MODOS ---- */
+  .modo-card{
+    display:flex; align-items:center; gap:16px;
+    background:var(--stone-light); border:2px solid var(--stone-lighter);
+    border-radius:10px; padding:18px 18px; margin-bottom:14px;
+    cursor:pointer; text-align:left; width:100%;
+    transition:border-color .12s, transform .08s;
+    font-family:'Inter',sans-serif; color:var(--parchment);
   }
+  .modo-card:hover{ border-color:var(--gold-dim); }
+  .modo-card:active{ transform:scale(.99); }
+  .modo-card .icono{ font-size:34px; flex-shrink:0; }
+  .modo-card .txt h3{ font-family:'Cinzel', serif; margin:0 0 4px; font-size:17px; color:var(--gold-bright); }
+  .modo-card .txt p{ margin:0; font-size:13px; color:var(--parchment-dim); line-height:1.4; }
+
+  .campo{ margin-bottom:16px; }
+  .campo label{
+    display:block; font-size:12px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--parchment-dim); margin-bottom:6px; font-weight:600;
+  }
+  .campo input{
+    width:100%; padding:13px 14px; border-radius:6px;
+    border:2px solid var(--stone-lighter); background:var(--stone-dark);
+    color:var(--parchment); font-family:'Inter',sans-serif; font-size:16px;
+    outline:none; transition:border-color .15s;
+  }
+  .campo input:focus{ border-color:var(--gold-dim); }
+  .campo.p1 input:focus{ border-color:var(--p1); }
+  .campo.p2 input:focus{ border-color:var(--p2); }
+
+  .fila-info{ display:flex; gap:16px; margin:22px 0 26px; flex-wrap:wrap; }
+  .info-item{
+    flex:1; min-width:140px;
+    background:var(--stone-light); border:1px solid var(--stone-lighter);
+    border-radius:8px; padding:12px 14px;
+  }
+  .info-item .k{ font-size:11px; color:var(--gold-dim); text-transform:uppercase; letter-spacing:.08em; font-weight:700; }
+  .info-item .v{ font-size:13px; color:var(--parchment-dim); margin-top:4px; line-height:1.4; }
 
   .btn{
-    font-family:var(--fuente-titulo);
-    font-weight:700;
-    font-size:1rem;
-    letter-spacing:0.04em;
-    display:block;
-    width:100%;
-    padding:14px 20px;
-    margin-top:22px;
-    background:linear-gradient(180deg, #f0c665, var(--gold-dim));
-    color:#241c0c;
-    border:none;
-    border-radius:5px;
-    cursor:pointer;
-    box-shadow:0 4px 0 #6b5019, 0 8px 16px rgba(0,0,0,0.4);
-    transition:transform 0.08s ease, filter 0.15s ease, opacity 0.15s ease;
+    width:100%; padding:16px; border:none; border-radius:8px;
+    background:linear-gradient(180deg, var(--gold-bright), var(--gold));
+    color:var(--ink); font-family:'Cinzel', serif; font-weight:700;
+    font-size:16px; letter-spacing:.03em; cursor:pointer;
+    box-shadow:0 6px 0 var(--gold-dim), 0 10px 24px rgba(0,0,0,0.4);
+    transition:transform .08s, box-shadow .08s;
   }
-  .btn:hover:not(:disabled){ filter:brightness(1.06); }
-  .btn:active:not(:disabled){ transform:translateY(3px); box-shadow:0 1px 0 #6b5019; }
-  .btn:focus-visible{ outline:3px solid var(--parchment); outline-offset:3px; }
-  .btn:disabled{ opacity:0.5; cursor:not-allowed; }
-
+  .btn:active{ transform:translateY(4px); box-shadow:0 2px 0 var(--gold-dim), 0 4px 10px rgba(0,0,0,0.4); }
+  .btn:focus-visible{ outline:3px solid var(--parchment); outline-offset:2px; }
+  .btn:disabled{ opacity:.5; cursor:default; }
   .btn.secundario{
-    background:linear-gradient(180deg, #4a4160, #2e2740);
+    background:linear-gradient(180deg, var(--stone-lighter), var(--stone-light));
     color:var(--parchment);
-    box-shadow:0 4px 0 #171226, 0 8px 16px rgba(0,0,0,0.4);
+    box-shadow:0 6px 0 var(--stone-dark), 0 10px 24px rgba(0,0,0,0.4);
   }
+  .btn.secundario:active{ box-shadow:0 2px 0 var(--stone-dark), 0 4px 10px rgba(0,0,0,0.4); }
+  .btn.p1{ background:linear-gradient(180deg, #ef8452, var(--p1)); box-shadow:0 6px 0 var(--p1-dim), 0 10px 24px rgba(0,0,0,0.4); color:#241109;}
+  .btn.p2{ background:linear-gradient(180deg, #6bd4b3, var(--p2)); box-shadow:0 6px 0 var(--p2-dim), 0 10px 24px rgba(0,0,0,0.4); color:#0a2b22;}
 
-  .btn.peligro{
-    background:linear-gradient(180deg, #e0654a, var(--blood));
-    color:#2a0a0a;
-    box-shadow:0 4px 0 #6e1f1f, 0 8px 16px rgba(0,0,0,0.4);
-  }
+  .intermezzo{ text-align:center; padding:20px 0; }
+  .intermezzo .icono{ font-size:52px; margin-bottom:14px; }
+  .intermezzo h2{ font-family:'Cinzel', serif; font-size:24px; margin:0 0 8px; }
+  .intermezzo p{ color:var(--parchment-dim); margin:0 0 26px; font-size:14px; }
 
   .hud{
-    display:flex; justify-content:space-between; align-items:center;
-    margin-bottom:18px; font-size:0.9rem; color:#c9bfdb;
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:14px; gap:10px; flex-wrap:wrap;
+  }
+  .hud-jugador{
+    font-family:'Cinzel', serif; font-weight:700; font-size:14px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .hud-jugador .dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .hud-vidas{ font-size:15px; letter-spacing:2px; }
+  .hud-puntaje{ font-family:'JetBrains Mono', monospace; font-size:20px; font-weight:700; }
+  .hud-tiempo{
+    font-family:'JetBrains Mono', monospace; font-size:20px; font-weight:700;
+    padding:5px 12px; border-radius:8px; background:var(--stone-dark);
+    border:1px solid var(--stone-lighter); min-width:70px; text-align:center;
+  }
+  .hud-tiempo.urgente{ color:var(--blood); border-color:var(--blood); animation:pulso 1s infinite; }
+  @keyframes pulso{ 0%,100%{opacity:1;} 50%{opacity:.5;} }
+
+  .progreso-salas{
+    display:flex; gap:6px; margin-bottom:16px; justify-content:center;
+  }
+  .progreso-salas .paso{
+    width:100%; max-width:44px; height:6px; border-radius:3px;
+    background:var(--stone-lighter);
+  }
+  .progreso-salas .paso.hecho{ background:var(--gold); }
+  .progreso-salas .paso.actual{ background:var(--gold-dim); }
+  .progreso-salas .paso.jefe{ background:var(--blood); }
+
+  .barra-tiempo-fondo{
+    height:8px; border-radius:4px; background:var(--stone-dark);
+    border:1px solid rgba(255,255,255,0.06); overflow:hidden; margin-bottom:18px;
+  }
+  .barra-tiempo{ height:100%; background:linear-gradient(90deg, var(--gold-dim), var(--gold)); transition:width 1s linear; }
+
+  .racha{
+    text-align:center; font-family:'JetBrains Mono', monospace; font-size:12px;
+    color:var(--gold); margin-bottom:8px; min-height:16px; letter-spacing:.04em;
   }
 
-  .sala-label{
-    font-family:var(--fuente-titulo); color:var(--gold);
-    font-weight:700; letter-spacing:0.05em;
-  }
-
-  .vidas{ font-size:1.15rem; letter-spacing:3px; }
-
-  .panel-ecuacion{
-    background:linear-gradient(180deg, #1c1728, #14101e);
-    border:1px solid rgba(232,184,75,0.25);
-    border-radius:6px;
-    padding:26px 18px;
-    text-align:center;
-    margin:18px 0;
-    box-shadow:inset 0 0 25px rgba(0,0,0,0.5);
-  }
-
-  .ecuacion-texto{
-    font-family:var(--fuente-mono);
-    font-size:1.5rem;
-    color:var(--parchment);
-    letter-spacing:0.03em;
-  }
-
-  .instruccion{
-    text-align:center;
-    color:#b8aecb;
-    font-size:0.9rem;
-    margin:0 0 14px 0;
-    line-height:1.5;
-  }
-
-  /* ---- Dos casillas, una por raíz ---- */
-  .raices-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:14px;
-  }
-  .raiz-campo{ display:flex; flex-direction:column; gap:6px; }
-  .raiz-label{
-    display:block;
-    font-family:var(--fuente-titulo);
-    font-size:0.8rem;
-    font-weight:700;
-    letter-spacing:0.06em;
-    text-transform:uppercase;
-    color:var(--gold);
+  .tarjeta-problema{
+    background:var(--stone-light); border:1px solid var(--stone-lighter);
+    border-radius:10px; padding:24px 20px; margin-bottom:18px;
     text-align:center;
   }
+  .tarjeta-problema.jefe{ border-color:var(--gold-dim); background:linear-gradient(180deg, rgba(217,64,63,0.08), var(--stone-light)); }
+  .tarjeta-problema.correcto{ border-color:var(--p2); box-shadow:0 0 0 2px rgba(63,184,150,0.3); }
+  .tarjeta-problema.incorrecto{ border-color:var(--blood); box-shadow:0 0 0 2px rgba(217,64,63,0.3); animation:shake .35s; }
+  @keyframes shake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
 
-  input.campo{
-    width:100%;
-    padding:13px 14px;
-    font-family:var(--fuente-mono);
-    font-size:1.15rem;
-    text-align:center;
-    background:#0f0c17;
-    border:2px solid var(--gold-dim);
-    border-radius:5px;
-    color:var(--parchment);
-    outline:none;
+  .problema-etiqueta{
+    font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--gold-dim); font-weight:700; margin-bottom:10px;
   }
-  input.campo::placeholder{ color:#6b6188; }
-  input.campo:focus{ border-color:var(--gold); box-shadow:0 0 0 3px rgba(232,184,75,0.25); }
-  input.campo:disabled{ opacity:0.55; }
+  .problema-enunciado{
+    font-family:'JetBrains Mono', monospace; font-size:clamp(19px, 5.5vw, 25px);
+    font-weight:700; color:var(--parchment); line-height:1.5;
+  }
+  .problema-nota{ font-size:13px; color:var(--parchment-dim); margin-top:8px; font-family:'Inter',sans-serif; }
 
-  .nota-orden{
-    text-align:center;
-    color:var(--humo);
-    font-size:0.8rem;
-    margin:10px 0 0 0;
+  .zona-respuesta{ display:flex; gap:10px; margin-bottom:8px; }
+  .zona-respuesta input{
+    flex:1; padding:15px 14px; border-radius:8px;
+    border:2px solid var(--stone-lighter); background:var(--stone-dark);
+    color:var(--parchment); font-family:'JetBrains Mono', monospace;
+    font-size:18px; text-align:center; outline:none;
+    transition:border-color .12s, background .12s;
   }
-  .nota-fina{ font-size:0.8rem; color:var(--humo); }
+  .zona-respuesta input:focus{ border-color:var(--gold-dim); }
+  .zona-respuesta input.correcto{ border-color:var(--p2); background:rgba(63,184,150,0.14); }
+  .zona-respuesta input.incorrecto{ border-color:var(--blood); background:rgba(217,64,63,0.14); }
+  .zona-respuesta button{
+    flex-shrink:0; padding:0 22px; border:none; border-radius:8px;
+    background:linear-gradient(180deg, var(--gold-bright), var(--gold));
+    color:var(--ink); font-family:'Cinzel', serif; font-weight:700; font-size:14px;
+    cursor:pointer;
+  }
+  .zona-respuesta button:disabled{ opacity:.4; cursor:default; }
 
-  .temporizador-wrap{
-    margin-top:16px;
-    height:8px;
-    background:#0f0c17;
-    border-radius:4px;
-    overflow:hidden;
-    border:1px solid rgba(232,184,75,0.2);
+  .respuesta-correcta-txt{
+    text-align:center; font-size:13px; color:var(--parchment-dim); min-height:18px; margin-bottom:6px;
   }
-  .temporizador-barra{
-    height:100%;
-    background:linear-gradient(90deg, var(--moss), var(--gold));
-    width:100%;
-    transition:width 1s linear;
-  }
-  .temporizador-barra.critico{
-    background:linear-gradient(90deg, var(--ember), var(--blood));
-  }
-  .temporizador-texto{ text-align:center; font-size:0.8rem; color:#a89bc2; margin-top:6px; }
+  .respuesta-correcta-txt b{ color:var(--p2); }
 
-  .puntaje{ text-align:center; color:var(--moss); font-size:0.85rem; margin-top:4px; }
-
-  .mensaje{
-    text-align:center; font-size:0.9rem; margin-top:14px; min-height:22px; line-height:1.5;
-  }
-  .mensaje.error{ color:var(--blood-texto); }
-  .mensaje.ok{ color:var(--moss); }
-
-  .boss-titulo{
-    font-family:var(--fuente-titulo); text-align:center; color:var(--blood);
-    font-size:1.3rem; letter-spacing:0.04em; margin-bottom:10px;
-    text-shadow:0 0 16px rgba(194,59,59,0.45);
-  }
-
-  .fase-badge{
-    display:inline-block; margin:0 auto 12px auto;
-    background:rgba(194,59,59,0.15);
-    border:1px solid rgba(194,59,59,0.4);
-    color:#f0a394;
-    font-size:0.78rem;
-    padding:4px 12px;
-    border-radius:20px;
-  }
-  .centro{ text-align:center; }
-
+  .resultado-corona{ text-align:center; font-size:52px; margin-bottom:6px; }
   .resultado-titulo{
-    font-family:var(--fuente-titulo); font-size:2rem; text-align:center;
-    margin-bottom:8px;
+    font-family:'Cinzel', serif; font-weight:800; font-size:24px;
+    text-align:center; color:var(--gold-bright); margin-bottom:4px;
   }
-  .resultado-titulo.victoria{ color:var(--gold); text-shadow:0 0 20px rgba(232,184,75,0.5); }
-  .resultado-titulo.derrota{ color:var(--blood-texto); text-shadow:0 0 20px rgba(194,59,59,0.4); }
+  .resultado-sub{ text-align:center; color:var(--parchment-dim); font-size:14px; margin-bottom:22px; }
 
-  .estadistica{ text-align:center; color:var(--parchment); font-size:1.05rem; margin-top:6px; }
+  .tabla-resultado{ display:flex; gap:14px; margin-bottom:22px; }
+  .tarjeta-jugador{
+    flex:1; border-radius:10px; padding:18px 14px; text-align:center;
+    background:var(--stone-light); border:2px solid var(--stone-lighter);
+  }
+  .tarjeta-jugador.ganador{ border-color:var(--gold); background:linear-gradient(180deg, rgba(232,184,75,0.12), var(--stone-light)); }
+  .tarjeta-jugador .nombre{ font-family:'Cinzel', serif; font-weight:700; font-size:15px; margin-bottom:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tarjeta-jugador .puntaje{ font-family:'JetBrains Mono', monospace; font-size:30px; font-weight:700; margin-bottom:10px; }
+  .tarjeta-jugador .detalle{ font-size:12px; color:var(--parchment-dim); line-height:1.7; text-align:left; padding:0 4px; }
+  .tarjeta-jugador .detalle b{ color:var(--parchment); }
 
-  footer.creditos{
-    text-align:center; color:var(--humo); font-size:0.75rem; margin-top:18px;
+  .botonera{ display:flex; gap:10px; }
+  .botonera .btn{ flex:1; }
+
+  /* ---- MODO ÉPICO: jefe con HP, poderes, logros ---- */
+  .jefe-hp-wrap{ margin-bottom:14px; }
+  .jefe-hp-etiqueta{
+    display:flex; justify-content:space-between; font-size:11px;
+    text-transform:uppercase; letter-spacing:.06em; color:var(--gold-dim);
+    font-weight:700; margin-bottom:4px;
+  }
+  .jefe-hp-fondo{
+    display:flex; gap:4px; height:16px;
+  }
+  .jefe-hp-seg{
+    flex:1; border-radius:4px; background:var(--blood);
+    border:1px solid rgba(0,0,0,0.3);
+    transition:background .3s, transform .2s;
+  }
+  .jefe-hp-seg.caido{ background:var(--stone-lighter); }
+  .jefe-hp-wrap.impacto .jefe-hp-fondo{ animation:golpeJefe .3s; }
+  @keyframes golpeJefe{ 0%,100%{transform:translateX(0);} 30%{transform:translateX(3px);} 60%{transform:translateX(-3px);} }
+  .dano-flotante{
+    text-align:center; font-family:'Cinzel',serif; font-weight:800; font-size:18px;
+    color:var(--p2); min-height:22px; margin-bottom:4px;
   }
 
-  @media (max-width:380px){
-    .marco{ padding:26px 18px; }
-    .raices-grid{ gap:10px; }
-    h1.titulo{ font-size:1.5rem; }
-    .ecuacion-texto{ font-size:1.25rem; }
+  .poderes{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .poder-btn{
+    flex:1; min-width:76px; padding:10px 6px; border-radius:8px;
+    border:2px solid var(--stone-lighter); background:var(--stone-light);
+    color:var(--parchment); font-family:'Inter',sans-serif; font-size:11px; font-weight:600;
+    cursor:pointer; text-align:center; line-height:1.3;
+    transition:border-color .12s, transform .08s;
+  }
+  .poder-btn .emoji{ font-size:18px; display:block; margin-bottom:2px; }
+  .poder-btn:hover:not(:disabled){ border-color:var(--gold-dim); }
+  .poder-btn:active:not(:disabled){ transform:scale(.95); }
+  .poder-btn:disabled{ opacity:.3; cursor:default; }
+
+  .pista-texto{
+    text-align:center; font-size:13px; color:var(--gold-bright);
+    background:rgba(232,184,75,0.08); border:1px dashed var(--gold-dim);
+    border-radius:6px; padding:8px 10px; margin-top:10px;
   }
 
-  @media (prefers-reduced-motion: reduce){
-    *{ transition-duration:0.01ms !important; animation-duration:0.01ms !important; }
+  .logros{ margin:6px 0 22px; }
+  .logro-item{
+    display:flex; align-items:center; gap:10px;
+    background:var(--stone-light); border:1px solid var(--stone-lighter);
+    border-radius:8px; padding:10px 14px; margin-bottom:8px;
+    font-size:13px;
+  }
+  .logro-item .emoji{ font-size:20px; flex-shrink:0; }
+
+  .tarjeta-iq{
+    background:linear-gradient(180deg, rgba(232,184,75,0.10), var(--stone-light));
+    border:2px solid var(--gold-dim); border-radius:10px;
+    padding:16px 18px; margin-bottom:20px; text-align:center;
+  }
+  .tarjeta-iq .k{ font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold-dim); font-weight:700; margin-bottom:4px; }
+  .tarjeta-iq .valor{ font-family:'Cinzel',serif; font-weight:800; font-size:26px; color:var(--gold-bright); }
+  .tarjeta-iq .etiqueta{ font-size:13px; color:var(--parchment-dim); margin-top:2px; }
+  .tarjeta-iq .nota{ font-size:10px; color:var(--parchment-dim); opacity:.7; margin-top:8px; font-style:italic; }
+  .tarjeta-iq.doble{ display:flex; gap:14px; text-align:left; align-items:center; }
+  .tarjeta-iq.doble .lado{ flex:1; text-align:center; }
+
+  /* ---- MODO TORNEO ---- */
+  .jugadores-lista{ margin-bottom:16px; }
+  .jugador-fila{
+    display:flex; align-items:center; gap:10px; margin-bottom:10px;
+  }
+  .jugador-fila input{
+    flex:1; padding:12px 14px; border-radius:6px;
+    border:2px solid var(--stone-lighter); background:var(--stone-dark);
+    color:var(--parchment); font-family:'Inter',sans-serif; font-size:15px; outline:none;
+  }
+  .jugador-fila input:focus{ border-color:var(--gold-dim); }
+  .jugador-fila .num{
+    width:26px; text-align:center; font-family:'JetBrains Mono',monospace;
+    color:var(--gold-dim); font-weight:700; flex-shrink:0;
+  }
+  .jugador-fila .quitar{
+    flex-shrink:0; width:34px; height:34px; border-radius:6px; border:none;
+    background:var(--stone-lighter); color:var(--parchment-dim); cursor:pointer; font-size:15px;
+  }
+  .btn-agregar-jugador{
+    width:100%; padding:11px; border-radius:6px; border:2px dashed var(--stone-lighter);
+    background:transparent; color:var(--parchment-dim); font-family:'Inter',sans-serif;
+    font-size:13px; cursor:pointer; margin-bottom:18px;
+  }
+  .btn-agregar-jugador:hover{ border-color:var(--gold-dim); color:var(--gold-bright); }
+
+  .bracket-ronda-titulo{
+    font-family:'Cinzel',serif; font-weight:700; font-size:15px; color:var(--gold-bright);
+    text-align:center; margin-bottom:14px;
+  }
+  .bracket-lista{ margin-bottom:20px; }
+  .bracket-match{
+    background:var(--stone-light); border:1px solid var(--stone-lighter);
+    border-radius:8px; padding:12px 14px; margin-bottom:10px;
+  }
+  .bracket-match .vs-fila{
+    display:flex; align-items:center; justify-content:space-between; font-size:14px; padding:4px 0;
+  }
+  .bracket-match .vs-fila.ganador{ color:var(--gold-bright); font-weight:700; }
+  .bracket-match .vs-fila .pts{ font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--parchment-dim); }
+  .bracket-match .vs-sep{ text-align:center; font-size:10px; color:var(--parchment-dim); letter-spacing:.1em; padding:2px 0; }
+  .bracket-match.pendiente{ opacity:.55; }
+  .bracket-match .bye{ font-size:11px; color:var(--parchment-dim); font-style:italic; text-align:center; padding:4px 0; }
+
+  .campeon-box{
+    text-align:center; background:linear-gradient(180deg, rgba(232,184,75,0.14), var(--stone-light));
+    border:2px solid var(--gold); border-radius:10px; padding:24px 18px; margin-bottom:20px;
+  }
+  .campeon-box .corona{ font-size:44px; margin-bottom:8px; }
+  .campeon-box .nombre{ font-family:'Cinzel',serif; font-weight:800; font-size:22px; color:var(--gold-bright); }
+  .campeon-box .sub{ font-size:13px; color:var(--parchment-dim); margin-top:4px; }
+
+  .muerte-subita-banner{
+    text-align:center; background:rgba(217,64,63,0.12); border:1px solid var(--blood);
+    border-radius:8px; padding:10px 14px; margin-bottom:16px; font-size:13px; color:var(--parchment);
+  }
+
+  /* ---- ESCENA DE ENTRADA AL JEFE FINAL ---- */
+  .jefe-intro{
+    text-align:center; padding:10px 0 4px;
+    position:relative;
+  }
+  .jefe-intro::before{
+    content:"";
+    position:absolute; inset:-34px -30px auto -30px; height:220px;
+    background:radial-gradient(ellipse at center, rgba(217,64,63,0.22), transparent 70%);
+    pointer-events:none; z-index:0;
+  }
+  .jefe-intro .grieta{
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.3em;
+    color:var(--blood); text-transform:uppercase; margin-bottom:6px; position:relative;
+    animation:parpadeo 1.6s infinite;
+  }
+  @keyframes parpadeo{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  .jefe-intro .criatura{
+    font-size:76px; margin:8px 0 10px; position:relative;
+    animation:aparicionJefe .7s cubic-bezier(.2,.8,.2,1), respirarJefe 2.4s ease-in-out infinite .7s;
+    filter:drop-shadow(0 0 18px rgba(217,64,63,0.5));
+  }
+  @keyframes aparicionJefe{
+    0%{ transform:scale(.3) translateY(30px); opacity:0; }
+    60%{ transform:scale(1.15) translateY(-6px); opacity:1; }
+    100%{ transform:scale(1) translateY(0); }
+  }
+  @keyframes respirarJefe{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.06); } }
+  .jefe-intro .nombre-jefe{
+    font-family:'Cinzel',serif; font-weight:800; font-size:clamp(22px,6vw,30px);
+    color:var(--blood); text-shadow:0 0 18px rgba(217,64,63,0.55), 0 2px 4px rgba(0,0,0,0.6);
+    margin-bottom:6px; position:relative; letter-spacing:.02em;
+  }
+  .jefe-intro .titulo-jefe{
+    font-family:'Cinzel',serif; font-size:13px; color:var(--gold-dim);
+    text-transform:uppercase; letter-spacing:.12em; margin-bottom:16px; position:relative;
+  }
+  .jefe-intro .flavor{
+    font-size:14px; color:var(--parchment-dim); line-height:1.6; max-width:480px;
+    margin:0 auto 20px; position:relative;
+  }
+  .jefe-intro .stats-jefe{
+    display:flex; gap:10px; justify-content:center; margin-bottom:22px; position:relative; flex-wrap:wrap;
+  }
+  .jefe-intro .stat-chip{
+    background:rgba(217,64,63,0.1); border:1px solid var(--blood); border-radius:20px;
+    padding:6px 14px; font-size:12px; color:var(--parchment); font-family:'JetBrains Mono',monospace;
+  }
+  .btn.combate{
+    background:linear-gradient(180deg, #f0715a, var(--blood));
+    box-shadow:0 6px 0 #7a1f1f, 0 10px 24px rgba(0,0,0,0.4); color:#2a0d0d;
+    position:relative;
+  }
+  .btn.combate:active{ box-shadow:0 2px 0 #7a1f1f, 0 4px 10px rgba(0,0,0,0.4); }
+
+  .jefe-banner{
+    display:flex; align-items:center; gap:8px; justify-content:center;
+    background:rgba(217,64,63,0.08); border:1px solid rgba(217,64,63,0.4);
+    border-radius:8px; padding:6px 10px; margin-bottom:12px;
+    font-family:'Cinzel',serif; font-size:12px; color:var(--blood); letter-spacing:.04em;
+  }
+
+  @media (max-width:420px){
+    .tabla-resultado{ flex-direction:column; }
+    .zona-respuesta{ flex-direction:column; }
+    .modo-card{ flex-direction:column; text-align:center; }
   }
 </style>
 </head>
 <body>
-<div id="app">
-  <div class="marco" id="marco"></div>
-  <footer class="creditos">Festival Regional de la Matemática · UGEL Huancayo · Eje 2</footer>
-</div>
+<div id="app"><div class="marco" id="marco"></div></div>
 
 <script>
-'use strict';
-
-const VIDAS_INICIALES = 3;
-
-/* Cada sala define su propio rango de raíces Y su propio tiempo.
-   Antes el rango crecía (hasta ±13, con c = 169) pero el tiempo seguía fijo en 40 s. */
-const CONFIG_SALAS = [
-  { rango:5,  tiempo:45 },
-  { rango:6,  tiempo:45 },
-  { rango:8,  tiempo:50 },
-  { rango:9,  tiempo:55 },
-  { rango:11, tiempo:60 },
-];
-const TOTAL_SALAS = CONFIG_SALAS.length;
-
-const TIEMPO_BOSS = 90;   // segundos por fase del jefe. Poner 0 para quitarle el reloj.
-const TOLERANCIA  = 0.05; // margen aceptado al redondear las raíces del jefe a 2 decimales.
-
-let estado = {
-  nivel: 0,
-  vidas: VIDAS_INICIALES,
-  puntaje: 0,
-  tiempoRestante: 0,
-  temporizadorId: null,
-  transicionId: null,   // setTimeout entre pantallas: hay que poder cancelarlo
-  bloqueado: false,     // impide que un doble clic descuente dos vidas
-  ecuacion: null,
-  faseBoss: 1,
-};
-
 const marco = document.getElementById('marco');
+const DURACION_PARTIDA = 360; // 6 minutos
+const VIDAS_INICIALES = 3;
+let temporizadorId = null;
 
-// ---------- utilidades ----------
+const estado = { nombre1:'Jugador 1', nombre2:'Jugador 2', resultados:{1:null, 2:null} };
 
-function elegir(lista){ return lista[Math.floor(Math.random()*lista.length)]; }
+function limpiarTemporizador(){ if(temporizadorId){ clearInterval(temporizadorId); temporizadorId = null; } }
 
-function aleatorioDistintoDeCero(min, max){
-  let n;
-  do { n = Math.floor(Math.random()*(max-min+1))+min; } while(n===0);
-  return n;
+/* ===================== HELPERS ===================== */
+function entero(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function elegir(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function esCuadradoPerfecto(n){ if(n<0) return false; const r=Math.round(Math.sqrt(n)); return r*r===n; }
+function ecuacionTexto(a,b,c){
+  let s = '';
+  s += (a===1?'':a===-1?'-':a) + 'x²';
+  if(b!==0) s += (b>0?' + ':' − ') + (Math.abs(b)===1?'':Math.abs(b)) + 'x';
+  if(c!==0) s += (c>0?' + ':' − ') + Math.abs(c);
+  s += ' = 0';
+  return s;
 }
 
-/* Acepta "−3" (signo menos tipográfico) y "1,5" (coma decimal).
-   Rechaza lo que Number() dejaba pasar en silencio: "", "0x10", "1e3", "Infinity". */
-function parseNumero(texto){
-  const limpio = String(texto).trim()
-    .replace(/[−–—]/g, '-')
-    .replace(',', '.');
-  if(!/^[+-]?(\d+(\.\d*)?|\.\d+)$/.test(limpio)) return null;
-  return Number(limpio);
+/* ===================== GENERADORES POR SALA ===================== */
+
+function genSala1(facil){ // raices enteras, rango pequeño
+  const rango = facil ? 4 : 6;
+  let r1=entero(-rango,rango), r2=entero(-rango,rango);
+  if(r1===0) r1=1; if(r2===0) r2=2;
+  const b=-(r1+r2), c=r1*r2;
+  return { etiqueta:'Sala 1 de 5 · Raíces enteras', enunciado:ecuacionTexto(1,b,c),
+    nota:'Escribe ambas raíces separadas por coma. Ej: -2, 5',
+    tipoResp:'raices', respuesta:[r1,r2], formatoCorrecta:`${r1} y ${r2}`, puntos:100 };
 }
 
-function detenerTodo(){
-  if(estado.temporizadorId){ clearInterval(estado.temporizadorId); estado.temporizadorId = null; }
-  if(estado.transicionId){ clearTimeout(estado.transicionId); estado.transicionId = null; }
+function genSala2(facil){ // raices enteras rango mayor
+  const rango = facil ? 7 : 12;
+  let r1=entero(-rango,rango), r2=entero(-rango,rango);
+  if(r1===0) r1=4; if(r2===0) r2=-5;
+  const b=-(r1+r2), c=r1*r2;
+  return { etiqueta:'Sala 2 de 5 · Raíces enteras (rango mayor)', enunciado:ecuacionTexto(1,b,c),
+    nota:'Escribe ambas raíces separadas por coma. Ej: -2, 5',
+    tipoResp:'raices', respuesta:[r1,r2], formatoCorrecta:`${r1} y ${r2}`, puntos:130 };
 }
 
-function bloquearControles(){
-  marco.querySelectorAll('input, button').forEach(function(el){ el.disabled = true; });
+function genSala3(facil){ // decimal: a=1, discriminante no cuadrado perfecto
+  const rango = facil ? 6 : 9;
+  let b,c,d,intentos=0;
+  do{ b=entero(-rango,rango); c=entero(-rango,rango); d=b*b-4*c; intentos++; }
+  while((d<=0 || esCuadradoPerfecto(d)) && intentos<60);
+  const raizD=Math.sqrt(Math.max(d,1));
+  const r1=Math.round(((-b+raizD)/2)*100)/100;
+  return { etiqueta:'Sala 3 de 5 · Raíz con decimales', enunciado:ecuacionTexto(1,b,c),
+    nota:'Escribe una de sus raíces con 2 decimales. x = (−b ± √Δ) / 2',
+    tipoResp:'decimal', respuesta:r1, formatoCorrecta:r1.toFixed(2), puntos:160 };
 }
 
-function mostrarError(el, texto){
-  if(!el) return;
-  el.className = 'mensaje error';
-  el.textContent = texto;
+function genSala4(facil){ // vertice; en modo fácil siempre entero (b par)
+  const rango = facil ? 6 : 9;
+  let b = entero(-rango,rango);
+  if(facil){ if(b%2!==0) b += 1; if(b===0) b=2; }
+  else if(b===0) b=3;
+  const c = entero(-rango,rango);
+  const xv = Math.round((-b/2)*100)/100;
+  const yv = Math.round((xv*xv + b*xv + c)*100)/100;
+  return { etiqueta:'Sala 4 de 5 · Vértice de la parábola', enunciado:ecuacionTexto(1,b,c),
+    nota: facil ? 'Escribe el vértice como x, y. Ej: -2, 4' : 'Escribe el vértice como x, y (usa decimales si hace falta). Ej: -1.5, 4',
+    tipoResp:'punto', respuesta:[xv,yv], formatoCorrecta:`(${xv}, ${yv})`, puntos:190 };
 }
 
-function iniciarTemporizador(segundos, alAgotarse){
-  if(!segundos) return;
-  estado.tiempoRestante = segundos;
-  estado.temporizadorId = setInterval(function(){
-    estado.tiempoRestante -= 1;
-    const restante = Math.max(0, estado.tiempoRestante);
-    const barra = document.getElementById('barraTiempo');
-    const texto = document.getElementById('textoTiempo');
-    if(barra){
-      barra.style.width = (restante/segundos)*100 + '%';
-      barra.classList.toggle('critico', restante <= 10);
-    }
-    if(texto) texto.textContent = '⏱ Tiempo: ' + restante + 's';
-    if(estado.tiempoRestante <= 0){ detenerTodo(); alAgotarse(); }
-  }, 1000);
+function genSala5(facil){ // a != 1, suma o producto
+  const a = facil ? elegir([2,2,3]) : elegir([2,3,4]);
+  const rango = facil ? 6 : 10;
+  const b = entero(-rango,rango), c = entero(-rango,rango);
+  const pedirSuma = Math.random()<0.5;
+  const correcta = Math.round((pedirSuma ? -b/a : c/a)*100)/100;
+  return { etiqueta:`Sala 5 de 5 · ${pedirSuma?'Suma':'Producto'} de raíces (a ≠ 1)`, enunciado:ecuacionTexto(a,b,c),
+    nota: pedirSuma ? 'suma = −b/a · responde con 2 decimales' : 'producto = c/a · responde con 2 decimales',
+    tipoResp:'decimal', respuesta:correcta, formatoCorrecta:correcta.toFixed(2), puntos:220 };
 }
 
-// ---------- generación de ecuaciones ----------
+const GENERADORES_SALA = [genSala1, genSala2, genSala3, genSala4, genSala5];
 
-/* Se construye desde las raíces, así siempre son enteras.
-   r1 !== r2 garantiza que las dos casillas siempre tengan sentido. */
-function generarEcuacionNormal(nivel){
-  const rango = CONFIG_SALAS[nivel-1].rango;
-  const r1 = aleatorioDistintoDeCero(-rango, rango);
-  let r2;
-  do { r2 = aleatorioDistintoDeCero(-rango, rango); } while(r2 === r1);
-  return {
-    a: 1,
-    b: -(r1+r2),
-    c: r1*r2,
-    raices: [r1, r2].sort(function(x,y){ return x-y; }),
+// ---- JEFE FINAL (nivel 5to de secundaria; se suaviza un poco en modo fácil) ----
+function generarEcuacionJefe(facil){
+  const a = facil ? elegir([2,2,3]) : elegir([2,3,4]);
+  const rango = facil ? 6 : 9;
+  let b,c,d,intentos=0;
+  if(facil){
+    do{ b=entero(-rango,rango); c=entero(-rango,rango); d=b*b-4*a*c; intentos++; }
+    while(d<0 && intentos<80); // en fácil se permite raíz cuadrada perfecta (números más simples)
+  } else {
+    do{ b=entero(-rango,rango); c=entero(-rango,rango); d=b*b-4*a*c; intentos++; }
+    while((d<0 || esCuadradoPerfecto(d)) && intentos<80);
+  }
+  return {a,b,c,d};
+}
+function problemaJefeFase1(eq, idx){
+  return { etiqueta:`👑 Jefe Final · Fase 1: Discriminante (${idx+1} de 4)`, enunciado:ecuacionTexto(eq.a,eq.b,eq.c),
+    nota:'Calcula Δ = b² − 4ac', tipoResp:'numero', respuesta:eq.d, formatoCorrecta:String(eq.d), puntos:110 };
+}
+function problemaJefeFase2(eq, idx){
+  const raizD = Math.sqrt(eq.d);
+  const r1 = Math.round(((-eq.b+raizD)/(2*eq.a))*100)/100;
+  return { etiqueta:`👑 Jefe Final · Fase 2: Fórmula general (${idx+1} de 4)`, enunciado:ecuacionTexto(eq.a,eq.b,eq.c),
+    nota:`Halla una raíz con 2 decimales. x = (−b ± √Δ) / 2a   (Δ = ${eq.d})`,
+    tipoResp:'decimal', respuesta:r1, formatoCorrecta:r1.toFixed(2), puntos:150 };
+}
+
+/* ===================== VALIDACIÓN ===================== */
+function numerosDesdeTexto(txt){
+  return txt.split(/[,;yY]+/).map(s=>parseFloat(s.trim().replace(',','.'))).filter(n=>!isNaN(n));
+}
+function validarRespuesta(p, textoUsuario){
+  const txt = textoUsuario.trim();
+  if(txt==='') return false;
+  if(p.tipoResp==='raices' || p.tipoResp==='punto'){
+    const nums = numerosDesdeTexto(txt);
+    if(nums.length<2) return false;
+    const [a,b] = nums; const [ca,cb] = p.respuesta;
+    const directa = Math.abs(a-ca)<0.06 && Math.abs(b-cb)<0.06;
+    const cruzada = p.tipoResp==='raices' && Math.abs(a-cb)<0.06 && Math.abs(b-ca)<0.06;
+    return directa || cruzada;
+  }
+  if(p.tipoResp==='numero'){
+    const n = parseFloat(txt.replace(',','.'));
+    return !isNaN(n) && Math.abs(n-p.respuesta)<0.01;
+  }
+  if(p.tipoResp==='decimal'){
+    const n = parseFloat(txt.replace(',','.'));
+    return !isNaN(n) && Math.abs(n-p.respuesta)<0.06;
+  }
+  return false;
+}
+
+/* ===================== MENÚ Y PANTALLAS ===================== */
+
+function pantallaMenuPrincipal(){
+  limpiarTemporizador();
+  marco.innerHTML = `
+    <div class="eyebrow">Festival Regional de la Matemática · Eje 2</div>
+    <h1 class="titulo">🏰 La Mazmorra de las Cuadráticas</h1>
+    <div class="subtitulo">5 salas, un jefe final, y 6 minutos para demostrar dominio total.</div>
+
+    <button class="modo-card" id="btnAventura">
+      <div class="icono">🗺️</div>
+      <div class="txt"><h3>Aventura en solitario</h3><p>Recorre las 5 salas y vence al jefe final tú solo. Ideal para practicar o para la demostración en vivo.</p></div>
+    </button>
+    <button class="modo-card" id="btnDuelo">
+      <div class="icono">⚔️</div>
+      <div class="txt"><h3>Duelo 1 vs 1</h3><p>Dos retadores hacen el mismo recorrido, por turnos. Gana quien saque más puntaje.</p></div>
+    </button>
+    <button class="modo-card" id="btnEpico">
+      <div class="icono">🐉</div>
+      <div class="txt"><h3>Aventura Épica <span style="color:var(--gold-dim);font-size:11px;">NUEVO</span></h3><p>El jefe tiene barra de vida, tienes poderes especiales, sonidos y ganas logros al terminar.</p></div>
+    </button>
+    <button class="modo-card" id="btnTorneo">
+      <div class="icono">🏆</div>
+      <div class="txt"><h3>Torneo <span style="color:var(--gold-dim);font-size:11px;">NUEVO</span></h3><p>De 3 a 8 retadores, llaves de eliminación directa y muerte súbita en caso de empate. Ideal para el día del festival.</p></div>
+    </button>
+  `;
+  document.getElementById('btnAventura').onclick = pantallaInicioAventura;
+  document.getElementById('btnDuelo').onclick = pantallaInicioDuelo;
+  document.getElementById('btnEpico').onclick = pantallaInicioEpico;
+  document.getElementById('btnTorneo').onclick = pantallaInicioTorneo;
+}
+
+function infoPartidaHTML(facil){
+  return `
+    <div class="fila-info">
+      <div class="info-item"><div class="k">⏱ Tiempo</div><div class="v">6 minutos para completar las 5 salas y el jefe final.</div></div>
+      <div class="info-item"><div class="k">❤️ Vidas</div><div class="v">${facil?'4':'3'} vidas para toda la partida. Si fallas, ves la respuesta y reintentas.</div></div>
+      <div class="info-item"><div class="k">👑 Jefe Final</div><div class="v">${facil ? 'Números más simples para ir practicando, con discriminante y fórmula general.' : 'Nivel de 5to de secundaria: discriminante y fórmula general con decimales.'}</div></div>
+    </div>
+  `;
+}
+
+function pantallaInicioAventura(){
+  marco.innerHTML = `
+    <div class="eyebrow">Modo Aventura</div>
+    <h1 class="titulo">🗺️ Aventura en solitario</h1>
+    <div class="subtitulo">Tú contra la mazmorra. Un recorrido más relajado, ideal para practicar.</div>
+    <div class="campo">
+      <label>Tu nombre</label>
+      <input type="text" id="inNombre" maxlength="16" placeholder="Ej: Ana">
+    </div>
+    ${infoPartidaHTML(true)}
+    <button class="btn" id="btnComenzar">Entrar a la mazmorra</button>
+    <div style="height:10px"></div>
+    <button class="btn secundario" id="btnVolver">← Volver al menú</button>
+  `;
+  document.getElementById('btnVolver').onclick = pantallaMenuPrincipal;
+  document.getElementById('btnComenzar').onclick = () => {
+    const nombre = document.getElementById('inNombre').value.trim() || 'Retador';
+    iniciarPartida(nombre, 'p1', (sesion) => pantallaResultadoAventura(nombre, sesion), {facil:true});
   };
 }
 
-/* El jefe exige discriminante POSITIVO: con Δ < 0 no hay raíces reales y
-   la fase 2 era matemáticamente imposible de responder. */
-function generarEcuacionBoss(){
-  const aOpc = [2,3];
-  const bOpc = [-7,-5,5,7,9];
-  const cOpc = [-6,-4,-3,3,4];
-  let a, b, c, discriminante;
-  do {
-    a = elegir(aOpc); b = elegir(bOpc); c = elegir(cOpc);
-    discriminante = b*b - 4*a*c;
-  } while(discriminante <= 0);
-  return {a:a, b:b, c:c, discriminante:discriminante};
+function pantallaInicioDuelo(){
+  marco.innerHTML = `
+    <div class="eyebrow">Modo Duelo</div>
+    <h1 class="titulo">⚔️ Duelo 1 vs 1</h1>
+    <div class="subtitulo">Ambos hacen el mismo recorrido, por turnos. Gana el mayor puntaje.</div>
+    <div class="campo p1">
+      <label>Nombre del Retador 1</label>
+      <input type="text" id="inNombre1" maxlength="16" placeholder="Ej: Ana">
+    </div>
+    <div class="campo p2">
+      <label>Nombre del Retador 2</label>
+      <input type="text" id="inNombre2" maxlength="16" placeholder="Ej: Luis">
+    </div>
+    ${infoPartidaHTML()}
+    <button class="btn" id="btnComenzar">Comenzar duelo</button>
+    <div style="height:10px"></div>
+    <button class="btn secundario" id="btnVolver">← Volver al menú</button>
+  `;
+  document.getElementById('btnVolver').onclick = pantallaMenuPrincipal;
+  document.getElementById('btnComenzar').onclick = () => {
+    const n1 = document.getElementById('inNombre1').value.trim();
+    const n2 = document.getElementById('inNombre2').value.trim();
+    estado.nombre1 = n1 || 'Jugador 1';
+    estado.nombre2 = n2 || 'Jugador 2';
+    pantallaIntermezzo(1);
+  };
 }
 
-function formatoEcuacion(a, b, c){
-  let texto = (a === 1 ? '' : a) + 'x²';
-  if(b !== 0) texto += '  ' + (b >= 0 ? '+' : '−') + '  ' + Math.abs(b) + 'x';
-  if(c !== 0) texto += '  ' + (c >= 0 ? '+' : '−') + '  ' + Math.abs(c);
-  return texto + '  =  0';
+function pantallaInicioEpico(){
+  marco.innerHTML = `
+    <div class="eyebrow">Modo Aventura Épica</div>
+    <h1 class="titulo">🐉 Aventura Épica</h1>
+    <div class="subtitulo">El mismo recorrido, con combate visual, poderes y logros.</div>
+    <div class="campo">
+      <label>Tu nombre</label>
+      <input type="text" id="inNombre" maxlength="16" placeholder="Ej: Ana">
+    </div>
+    ${infoPartidaHTML()}
+    <div class="fila-info">
+      <div class="info-item"><div class="k">🩸 Jefe con vida</div><div class="v">El jefe resiste 8 golpes (4 por fase). Si fallas, te contraataca.</div></div>
+      <div class="info-item"><div class="k">✨ Poderes</div><div class="v">Pista, pausa de tiempo, poción de vida y doble puntaje — uno de cada, úsalos con estrategia.</div></div>
+      <div class="info-item"><div class="k">🏅 Logros</div><div class="v">Al terminar desbloqueas medallas según cómo jugaste.</div></div>
+    </div>
+    <button class="btn" id="btnComenzar">Entrar a la mazmorra épica</button>
+    <div style="height:10px"></div>
+    <button class="btn secundario" id="btnVolver">← Volver al menú</button>
+  `;
+  document.getElementById('btnVolver').onclick = pantallaMenuPrincipal;
+  document.getElementById('btnComenzar').onclick = () => {
+    const nombre = document.getElementById('inNombre').value.trim() || 'Retador';
+    iniciarPartida(nombre, 'p1', (sesion) => pantallaResultadoEpico(nombre, sesion), {epico:true});
+  };
 }
 
-// Versión hablada, para lectores de pantalla (que leerían "x²" como "x2").
-function ecuacionEnPalabras(a, b, c){
-  let t = (a === 1 ? '' : a + ' ') + 'x al cuadrado';
-  if(b !== 0) t += (b > 0 ? ' más ' : ' menos ') + Math.abs(b) + ' x';
-  if(c !== 0) t += (c > 0 ? ' más ' : ' menos ') + Math.abs(c);
-  return t + ' igual a cero';
+/* ===================== MODO TORNEO ===================== */
+
+const torneo = { jugadores:[], ronda:[], numeroRonda:1, historial:[] };
+
+function pantallaInicioTorneo(){
+  if(torneo.jugadores.length < 3){
+    torneo.jugadores = ['', '', ''];
+  }
+  renderInicioTorneo();
 }
 
-// ---------- fragmentos de interfaz ----------
+function renderInicioTorneo(){
+  const filas = torneo.jugadores.map((nom,i) => `
+    <div class="jugador-fila">
+      <span class="num">${i+1}</span>
+      <input type="text" class="in-jugador-torneo" data-i="${i}" maxlength="16" placeholder="Nombre del retador ${i+1}" value="${escapeHtml(nom)}">
+      ${torneo.jugadores.length>3 ? `<button class="quitar" data-i="${i}">✕</button>` : ''}
+    </div>
+  `).join('');
 
-function htmlVidas(){
-  const llenos = '❤️'.repeat(Math.max(0, estado.vidas));
-  const vacios = '🖤'.repeat(Math.max(0, VIDAS_INICIALES - estado.vidas));
-  return '<span class="vidas" role="img" aria-label="Vidas restantes: ' +
-    estado.vidas + ' de ' + VIDAS_INICIALES + '">' + llenos + vacios + '</span>';
-}
+  marco.innerHTML = `
+    <div class="eyebrow">Modo Torneo</div>
+    <h1 class="titulo">🏆 Torneo de la Mazmorra</h1>
+    <div class="subtitulo">De 3 a 8 retadores. Llaves de eliminación directa, muerte súbita en empates.</div>
 
-function htmlEcuacion(eq){
-  return '<div class="panel-ecuacion">' +
-    '<div class="ecuacion-texto" role="math" aria-label="' +
-      ecuacionEnPalabras(eq.a, eq.b, eq.c) + '">' +
-      formatoEcuacion(eq.a, eq.b, eq.c) +
-    '</div></div>';
-}
+    <div class="jugadores-lista" id="listaJugadores">${filas}</div>
+    ${torneo.jugadores.length<8 ? `<button class="btn-agregar-jugador" id="btnAgregarJugador">+ Agregar otro retador</button>` : ''}
 
-function htmlRaices(){
-  return '' +
-    '<div class="raices-grid">' +
-      '<div class="raiz-campo">' +
-        '<label class="raiz-label" for="raiz1">Una raíz</label>' +
-        '<input type="text" class="campo" id="raiz1" inputmode="text" autocomplete="off" placeholder="?">' +
-      '</div>' +
-      '<div class="raiz-campo">' +
-        '<label class="raiz-label" for="raiz2">La otra raíz</label>' +
-        '<input type="text" class="campo" id="raiz2" inputmode="text" autocomplete="off" placeholder="?">' +
-      '</div>' +
-    '</div>' +
-    '<p class="nota-orden">El orden no importa: da igual cuál escribas primero.</p>';
-}
+    ${infoPartidaHTML()}
 
-function htmlTemporizador(segundos){
-  if(!segundos) return '';
-  return '<div class="temporizador-wrap" aria-hidden="true">' +
-    '<div class="temporizador-barra" id="barraTiempo"></div></div>' +
-    '<div class="temporizador-texto" id="textoTiempo">⏱ Tiempo: ' + segundos + 's</div>';
-}
+    <button class="btn" id="btnComenzarTorneo">Generar llaves y comenzar</button>
+    <div style="height:10px"></div>
+    <button class="btn secundario" id="btnVolver">← Volver al menú</button>
+  `;
 
-// Enter en la primera casilla salta a la segunda; Enter en la segunda envía.
-function conectarRaices(alEnviar){
-  const r1 = document.getElementById('raiz1');
-  const r2 = document.getElementById('raiz2');
-  r1.focus();
-  r1.addEventListener('keydown', function(e){
-    if(e.key === 'Enter'){ e.preventDefault(); r2.focus(); }
+  document.getElementById('btnVolver').onclick = pantallaMenuPrincipal;
+  document.querySelectorAll('.in-jugador-torneo').forEach(inp=>{
+    inp.oninput = () => { torneo.jugadores[parseInt(inp.dataset.i)] = inp.value; };
   });
-  r2.addEventListener('keydown', function(e){
-    if(e.key === 'Enter'){ e.preventDefault(); alEnviar(); }
+  document.querySelectorAll('.jugador-fila .quitar').forEach(btn=>{
+    btn.onclick = () => { torneo.jugadores.splice(parseInt(btn.dataset.i),1); renderInicioTorneo(); };
   });
+  const btnAgregar = document.getElementById('btnAgregarJugador');
+  if(btnAgregar) btnAgregar.onclick = () => { torneo.jugadores.push(''); renderInicioTorneo(); };
+
+  document.getElementById('btnComenzarTorneo').onclick = () => {
+    const nombres = torneo.jugadores.map((n,i)=>n.trim()||`Retador ${i+1}`);
+    iniciarTorneo(nombres);
+  };
 }
 
-function leerRaices(){
-  const t1 = document.getElementById('raiz1').value.trim();
-  const t2 = document.getElementById('raiz2').value.trim();
-  if(t1 === '' || t2 === ''){
-    return { error:'Completa las dos casillas antes de confirmar.' };
-  }
-  const v1 = parseNumero(t1);
-  const v2 = parseNumero(t2);
-  if(v1 === null || v2 === null){
-    return { error:'Escribe solo números. Ejemplos válidos: 4    −3    1.5' };
-  }
-  // Se ordenan: así el orden que use el jugador es indiferente.
-  return { valores:[v1, v2].sort(function(x,y){ return x-y; }) };
+function iniciarTorneo(nombres){
+  // barajar orden para que las llaves no dependan del orden de inscripción
+  const barajados = nombres.slice();
+  for(let i=barajados.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [barajados[i],barajados[j]]=[barajados[j],barajados[i]]; }
+
+  torneo.ronda = barajados.map(n => ({nombre:n, eliminado:false}));
+  torneo.numeroRonda = 1;
+  torneo.historial = [];
+  jugarRonda();
 }
 
-// ---------- pantallas ----------
-
-function pantallaInicio(){
-  detenerTodo();
-  marco.innerHTML =
-    '<div class="torch-row">🏰</div>' +
-    '<h1 class="titulo">LA MAZMORRA DE LAS CUADRÁTICAS</h1>' +
-    '<p class="subtitulo">Un desafío de ' + TOTAL_SALAS + ' salas + un Jefe Final</p>' +
-    '<p class="lore">' +
-      'Debes atravesar ' + TOTAL_SALAS + ' salas resolviendo ecuaciones cuadráticas. ' +
-      'Cada sala es más difícil que la anterior, pero también te da más tiempo. ' +
-      'Al final te espera un <strong>JEFE FINAL</strong> con una ecuación temible.' +
-      '<br><br>' +
-      'Cada ecuación tiene <strong>dos raíces distintas</strong>: escribe una en cada ' +
-      'casilla, en el orden que quieras.' +
-      '<br><br>' +
-      'Tienes ' + VIDAS_INICIALES + ' vidas ❤️❤️❤️. ¡Piérdelas todas y la mazmorra gana!' +
-    '</p>' +
-    '<button class="btn" id="btnComenzar">⚔️  Comenzar aventura</button>';
-  document.getElementById('btnComenzar').onclick = iniciarJuego;
+function nombreRonda(cantidadJugadores){
+  if(cantidadJugadores<=2) return 'Gran Final';
+  if(cantidadJugadores<=4) return 'Semifinal';
+  if(cantidadJugadores<=8) return 'Cuartos de Final';
+  return `Ronda de ${cantidadJugadores}`;
 }
 
-function iniciarJuego(){
-  detenerTodo();
-  estado.nivel = 1;
-  estado.vidas = VIDAS_INICIALES;
-  estado.puntaje = 0;
-  pantallaSala();
-}
-
-function pantallaSala(){
-  detenerTodo();
-  if(estado.nivel > TOTAL_SALAS){ pantallaBoss(); return; }
-
-  const config = CONFIG_SALAS[estado.nivel-1];
-  estado.ecuacion = generarEcuacionNormal(estado.nivel);
-  estado.bloqueado = false;
-
-  marco.innerHTML =
-    '<div class="hud">' +
-      '<span class="sala-label">🚪 SALA ' + estado.nivel + ' / ' + TOTAL_SALAS + '</span>' +
-      htmlVidas() +
-    '</div>' +
-    '<div class="puntaje">Puntaje: ' + estado.puntaje + '</div>' +
-    htmlEcuacion(estado.ecuacion) +
-    '<p class="instruccion">Encuentra las dos raíces y escribe una en cada casilla.</p>' +
-    htmlRaices() +
-    '<button class="btn" id="btnConfirmar">Confirmar respuesta</button>' +
-    '<div class="mensaje" id="mensaje" role="status" aria-live="polite"></div>' +
-    htmlTemporizador(config.tiempo);
-
-  conectarRaices(verificarSala);
-  document.getElementById('btnConfirmar').onclick = verificarSala;
-  iniciarTemporizador(config.tiempo, function(){ perderVida('¡Se acabó el tiempo!'); });
-}
-
-function verificarSala(){
-  if(estado.bloqueado) return;
-
-  const mensaje = document.getElementById('mensaje');
-  const lectura = leerRaices();
-  if(lectura.error){ mostrarError(mensaje, lectura.error); return; }
-
-  const dadas = lectura.valores;
-  const correctas = estado.ecuacion.raices;
-
-  if(dadas[0] === correctas[0] && dadas[1] === correctas[1]){
-    estado.bloqueado = true;
-    detenerTodo();
-    bloquearControles();
-    estado.puntaje += 100 + Math.max(0, estado.tiempoRestante)*2;
-    mensaje.className = 'mensaje ok';
-    mensaje.textContent = '¡Correcto! La puerta se abre…';
-    estado.transicionId = setTimeout(function(){
-      estado.nivel += 1;
-      pantallaSala();
-    }, 900);
-  } else {
-    perderVida('Respuesta incorrecta.');
-  }
-}
-
-function perderVida(motivo){
-  if(estado.bloqueado) return;
-  estado.bloqueado = true;
-  detenerTodo();
-  bloquearControles();
-
-  estado.vidas -= 1;
-  if(estado.vidas <= 0){ pantallaDerrota(); return; }
-
-  const r = estado.ecuacion.raices;
-  mostrarError(document.getElementById('mensaje'),
-    motivo + ' Pierdes una vida, te quedan ' + estado.vidas +
-    '. Las raíces eran ' + r[0] + ' y ' + r[1] + '.');
-
-  estado.transicionId = setTimeout(pantallaSala, 2800);
-}
-
-// ---------- Jefe final ----------
-
-function pantallaBoss(){
-  detenerTodo();
-  estado.ecuacion = generarEcuacionBoss();
-  estado.faseBoss = 1;
-  renderBoss();
-}
-
-function renderBoss(){
-  detenerTodo();
-  estado.bloqueado = false;
-
-  const eq = estado.ecuacion;
-  const fase1 = estado.faseBoss === 1;
-
-  const bloqueRespuesta = fase1
-    ? '<p class="instruccion">Calcula el <strong>discriminante</strong>: Δ = b² − 4ac</p>' +
-      '<label class="raiz-label" for="campoDisc">Valor de Δ</label>' +
-      '<input type="text" class="campo" id="campoDisc" inputmode="text" autocomplete="off" placeholder="?" style="margin-top:6px">'
-    : '<p class="instruccion">Calcula las dos raíces con la fórmula general.<br>' +
-      '<span class="nota-fina">Redondea a 2 decimales. Ejemplo: 1.5 y −2.33</span></p>' +
-      htmlRaices();
-
-  marco.innerHTML =
-    '<div class="boss-titulo">👹 SALA FINAL: EL JEFE DE LAS CUADRÁTICAS 👹</div>' +
-    '<div class="centro" style="margin-bottom:14px;">' + htmlVidas() + '</div>' +
-    htmlEcuacion(eq) +
-    '<div class="centro"><span class="fase-badge">FASE ' + estado.faseBoss + ' de 2</span></div>' +
-    bloqueRespuesta +
-    '<button class="btn peligro" id="btnAtacar">⚔️ Atacar con la respuesta</button>' +
-    '<div class="mensaje" id="mensaje" role="status" aria-live="polite"></div>' +
-    htmlTemporizador(TIEMPO_BOSS);
-
-  if(fase1){
-    const campo = document.getElementById('campoDisc');
-    campo.focus();
-    campo.addEventListener('keydown', function(e){
-      if(e.key === 'Enter'){ e.preventDefault(); verificarBoss(); }
-    });
-  } else {
-    conectarRaices(verificarBoss);
-  }
-  document.getElementById('btnAtacar').onclick = verificarBoss;
-  iniciarTemporizador(TIEMPO_BOSS, function(){ perderVidaBoss('¡Se acabó el tiempo!'); });
-}
-
-function verificarBoss(){
-  if(estado.bloqueado) return;
-
-  const eq = estado.ecuacion;
-  const disc = eq.discriminante;
-  const mensaje = document.getElementById('mensaje');
-
-  // --- Fase 1: discriminante ---
-  if(estado.faseBoss === 1){
-    const texto = document.getElementById('campoDisc').value.trim();
-    if(texto === ''){ mostrarError(mensaje, 'Escribe el valor de Δ antes de atacar.'); return; }
-
-    const respuesta = parseNumero(texto);
-    if(respuesta === null){ mostrarError(mensaje, 'Escribe solo un número. Ejemplo: 25'); return; }
-
-    if(respuesta === disc){
-      estado.bloqueado = true;
-      detenerTodo();
-      bloquearControles();
-      mensaje.className = 'mensaje ok';
-      mensaje.textContent = '¡Δ = ' + disc + ' es correcto! El jefe se tambalea…';
-      estado.transicionId = setTimeout(function(){ estado.faseBoss = 2; renderBoss(); }, 1200);
-    } else {
-      perderVidaBoss('Discriminante incorrecto.');
-    }
+function jugarRonda(){
+  const jugadores = torneo.ronda;
+  if(jugadores.length===1){
+    pantallaCampeonTorneo(jugadores[0].nombre);
     return;
   }
 
-  // --- Fase 2: raíces por fórmula general ---
-  const lectura = leerRaices();
-  if(lectura.error){ mostrarError(mensaje, lectura.error); return; }
+  // armar emparejamientos; si es impar, el último pasa directo (bye)
+  const emparejamientos = [];
+  let i=0;
+  for(; i+1<jugadores.length; i+=2){
+    emparejamientos.push({a:jugadores[i], b:jugadores[i+1], resA:null, resB:null, ganador:null, muerteSubita:false});
+  }
+  if(i<jugadores.length){
+    emparejamientos.push({a:jugadores[i], b:null, resA:null, resB:null, ganador:jugadores[i].nombre, bye:true});
+  }
 
-  const raizDisc = Math.sqrt(disc);
-  const correctas = [
-    (-eq.b - raizDisc)/(2*eq.a),
-    (-eq.b + raizDisc)/(2*eq.a),
-  ].sort(function(p,q){ return p-q; });
-  const dadas = lectura.valores;
+  torneo.emparejamientos = emparejamientos;
+  torneo.indiceMatch = 0;
+  pantallaBracketRonda();
+}
 
-  const ok = Math.abs(dadas[0]-correctas[0]) <= TOLERANCIA &&
-             Math.abs(dadas[1]-correctas[1]) <= TOLERANCIA;
+function pantallaBracketRonda(){
+  const nombreEtapa = nombreRonda(torneo.ronda.length);
+  const emp = torneo.emparejamientos;
 
-  if(ok){
-    estado.bloqueado = true;
-    detenerTodo();
-    estado.puntaje += 500 + Math.max(0, estado.tiempoRestante)*2;
-    pantallaVictoria();
+  const filas = emp.map((m,idx) => {
+    if(m.bye){
+      return `<div class="bracket-match"><div class="vs-fila ganador">${escapeHtml(m.a.nombre)}</div><div class="bye">Pasa directo (sin rival)</div></div>`;
+    }
+    const jugado = m.ganador!==null;
+    const pts = (x)=> x===null ? '' : `<span class="pts">${x} pts</span>`;
+    return `
+      <div class="bracket-match ${jugado?'':'pendiente'}">
+        <div class="vs-fila ${m.ganador===m.a.nombre?'ganador':''}"><span>${escapeHtml(m.a.nombre)}</span>${pts(m.resA)}</div>
+        <div class="vs-sep">VS</div>
+        <div class="vs-fila ${m.ganador===m.b.nombre?'ganador':''}"><span>${escapeHtml(m.b.nombre)}</span>${pts(m.resB)}</div>
+        ${m.muerteSubita ? '<div class="bye">⚡ Decidido por muerte súbita</div>' : ''}
+      </div>
+    `;
+  }).join('');
+
+  const siguientePendiente = emp.findIndex(m => !m.bye && m.ganador===null);
+
+  marco.innerHTML = `
+    <div class="eyebrow">Torneo · ${nombreEtapa}</div>
+    <h1 class="titulo">🏆 Llaves del Torneo</h1>
+    <div class="bracket-ronda-titulo">${jugadores_restantes_txt()}</div>
+    <div class="bracket-lista">${filas}</div>
+    ${siguientePendiente>=0
+      ? `<button class="btn" id="btnJugarMatch">Jugar: ${escapeHtml(emp[siguientePendiente].a.nombre)} vs ${escapeHtml(emp[siguientePendiente].b.nombre)}</button>`
+      : `<button class="btn" id="btnSiguienteRonda">Continuar a la siguiente ronda →</button>`}
+    <div style="height:10px"></div>
+    <button class="btn secundario" id="btnVolver">← Salir del torneo</button>
+  `;
+  document.getElementById('btnVolver').onclick = pantallaMenuPrincipal;
+
+  if(siguientePendiente>=0){
+    document.getElementById('btnJugarMatch').onclick = () => jugarMatch(siguientePendiente);
   } else {
-    perderVidaBoss('Raíces incorrectas.');
+    document.getElementById('btnSiguienteRonda').onclick = () => {
+      torneo.ronda = emp.map(m => ({nombre:m.ganador, eliminado:false}));
+      torneo.numeroRonda++;
+      jugarRonda();
+    };
   }
 }
 
-function perderVidaBoss(motivo){
-  if(estado.bloqueado) return;
-  estado.bloqueado = true;
-  detenerTodo();
-  bloquearControles();
-
-  estado.vidas -= 1;
-  if(estado.vidas <= 0){ pantallaDerrota(); return; }
-
-  mostrarError(document.getElementById('mensaje'),
-    motivo + ' Te quedan ' + estado.vidas + ' vidas. Vuelve a intentarlo.');
-
-  estado.transicionId = setTimeout(renderBoss, 2400);
+function jugadores_restantes_txt(){
+  return `${torneo.ronda.length} retadores en esta ronda`;
 }
 
-// ---------- pantallas finales ----------
-
-function pantallaVictoria(){
-  detenerTodo();
-  marco.innerHTML =
-    '<div class="resultado-titulo victoria">🏆 ¡VICTORIA! 🏆</div>' +
-    '<p class="lore">Derrotaste al Jefe de las Cuadráticas.</p>' +
-    '<div class="estadistica">Puntaje final: ' +
-      '<strong style="color:var(--gold)">' + estado.puntaje + '</strong></div>' +
-    '<button class="btn" id="btnJugar">Jugar de nuevo</button>' +
-    '<button class="btn secundario" id="btnInicio">Volver al inicio</button>';
-  document.getElementById('btnJugar').onclick = iniciarJuego;
-  document.getElementById('btnInicio').onclick = pantallaInicio;
+function jugarMatch(indice){
+  const m = torneo.emparejamientos[indice];
+  pantallaIntermezzoTorneo(m.a.nombre, 'p1', '🗡️', () => {
+    iniciarPartida(m.a.nombre, 'p1', (sesionA) => {
+      m.resA = sesionA.puntaje; m._sesionA = sesionA;
+      pantallaIntermezzoTorneo(m.b.nombre, 'p2', '🛡️', () => {
+        iniciarPartida(m.b.nombre, 'p2', (sesionB) => {
+          m.resB = sesionB.puntaje; m._sesionB = sesionB;
+          resolverMatch(m, indice);
+        });
+      });
+    });
+  });
 }
 
-function pantallaDerrota(){
-  detenerTodo();
-  const donde = estado.nivel > TOTAL_SALAS ? 'el Jefe Final' : ('la Sala ' + estado.nivel);
-  marco.innerHTML =
-    '<div class="resultado-titulo derrota">💀 La mazmorra te ha vencido 💀</div>' +
-    '<p class="lore">Llegaste hasta: ' + donde + '</p>' +
-    '<div class="estadistica">Puntaje obtenido: ' +
-      '<strong style="color:var(--moss)">' + estado.puntaje + '</strong></div>' +
-    '<button class="btn" id="btnJugar">Intentar de nuevo</button>' +
-    '<button class="btn secundario" id="btnInicio">Volver al inicio</button>';
-  document.getElementById('btnJugar').onclick = iniciarJuego;
-  document.getElementById('btnInicio').onclick = pantallaInicio;
+function resolverMatch(m, indice){
+  if(m.resA === m.resB){
+    pantallaMuerteSubita(m, indice);
+    return;
+  }
+  m.ganador = m.resA > m.resB ? m.a.nombre : m.b.nombre;
+  pantallaBracketRonda();
 }
 
-pantallaInicio();
+function pantallaIntermezzoTorneo(nombre, color, icono, onListo){
+  limpiarTemporizador();
+  marco.innerHTML = `
+    <div class="intermezzo">
+      <div class="icono">${icono}</div>
+      <h2 style="color:var(--${color})">Turno de ${escapeHtml(nombre)}</h2>
+      <p>Recorre las 5 salas y el jefe final. Tu puntaje decide si avanzas en el torneo.</p>
+      <button class="btn ${color}" id="btnListo">Estoy listo</button>
+    </div>
+  `;
+  document.getElementById('btnListo').onclick = onListo;
+}
+
+function pantallaMuerteSubita(m, indice){
+  marco.innerHTML = `
+    <div class="eyebrow">Torneo · Empate</div>
+    <h1 class="titulo">⚡ Muerte Súbita</h1>
+    <div class="muerte-subita-banner">${escapeHtml(m.a.nombre)} y ${escapeHtml(m.b.nombre)} empataron en ${m.resA} pts. Una sola pregunta decide quién avanza.</div>
+    <button class="btn" id="btnMuerteSubita">Comenzar muerte súbita</button>
+    <div style="height:10px"></div>
+    <button class="btn secundario" id="btnVolver">← Salir del torneo</button>
+  `;
+  document.getElementById('btnVolver').onclick = pantallaMenuPrincipal;
+  document.getElementById('btnMuerteSubita').onclick = () => jugarMuerteSubita(m, indice, m.a.nombre, m.b.nombre);
+}
+
+function jugarMuerteSubita(m, indice, turnoA, turnoB){
+  const p = elegir(GENERADORES_SALA)();
+  let respuestaA = null;
+
+  function turno(nombre, color, alTerminar){
+    marco.innerHTML = `
+      <div class="hud">
+        <div class="hud-jugador"><span class="dot" style="background:var(--${color})"></span>${escapeHtml(nombre)}</div>
+      </div>
+      <div class="muerte-subita-banner">⚡ Muerte súbita — una sola pregunta, respuesta más rápida y correcta gana</div>
+      <div class="tarjeta-problema" id="tarjeta">
+        <div class="problema-etiqueta">${p.etiqueta}</div>
+        <div class="problema-enunciado">${p.enunciado}</div>
+        ${p.nota ? `<div class="problema-nota">${p.nota}</div>` : ''}
+      </div>
+      <div class="zona-respuesta">
+        <input type="text" id="inputResp" autocomplete="off" placeholder="Escribe tu respuesta...">
+        <button id="btnResponder">Verificar</button>
+      </div>
+      <div class="respuesta-correcta-txt" id="textoCorrecta"></div>
+    `;
+    const input = document.getElementById('inputResp');
+    const inicio = Date.now();
+    input.focus();
+    const enviar = () => {
+      if(input.disabled) return;
+      if(input.value.trim()==='') { input.focus(); return; }
+      const ok = validarRespuesta(p, input.value);
+      const tiempo = (Date.now()-inicio)/1000;
+      input.disabled = true;
+      document.getElementById('btnResponder').disabled = true;
+      document.getElementById('tarjeta').classList.add(ok?'correcto':'incorrecto');
+      input.classList.add(ok?'correcto':'incorrecto');
+      if(!ok) document.getElementById('textoCorrecta').innerHTML = `Respuesta correcta: <b>${escapeHtml(p.formatoCorrecta)}</b>`;
+      setTimeout(()=> alTerminar(ok, tiempo), 900);
+    };
+    document.getElementById('btnResponder').onclick = enviar;
+    input.onkeydown = (e) => { if(e.key==='Enter') enviar(); };
+  }
+
+  turno(turnoA, 'p1', (okA, tiempoA) => {
+    turno(turnoB, 'p2', (okB, tiempoB) => {
+      let ganador;
+      if(okA && !okB) ganador = turnoA;
+      else if(okB && !okA) ganador = turnoB;
+      else if(okA && okB) ganador = tiempoA<=tiempoB ? turnoA : turnoB;
+      else ganador = tiempoA<=tiempoB ? turnoA : turnoB; // ambos fallan: gana quien respondió más rápido
+      m.ganador = ganador;
+      m.muerteSubita = true;
+      pantallaBracketRonda();
+    });
+  });
+}
+
+function pantallaCampeonTorneo(nombre){
+  sonido('victoria');
+  marco.innerHTML = `
+    <div class="campeon-box">
+      <div class="corona">👑🏆</div>
+      <div class="nombre">${escapeHtml(nombre)}</div>
+      <div class="sub">Campeón del Torneo de la Mazmorra de las Cuadráticas</div>
+    </div>
+    <button class="btn" id="btnNuevoTorneo">Nuevo torneo</button>
+    <div style="height:10px"></div>
+    <button class="btn secundario" id="btnMenu">Menú principal</button>
+  `;
+  document.getElementById('btnMenu').onclick = pantallaMenuPrincipal;
+  document.getElementById('btnNuevoTorneo').onclick = () => {
+    torneo.jugadores = []; pantallaInicioTorneo();
+  };
+}
+
+function pantallaIntermezzo(jugador){
+  limpiarTemporizador();
+  const nombre = jugador===1 ? estado.nombre1 : estado.nombre2;
+  const color = jugador===1 ? 'p1' : 'p2';
+  const icono = jugador===1 ? '🗡️' : '🛡️';
+  marco.innerHTML = `
+    <div class="intermezzo">
+      <div class="icono">${icono}</div>
+      <h2 style="color:var(--${color})">Turno de ${escapeHtml(nombre)}</h2>
+      <p>${jugador===1 ? 'Que comience el desafío: 5 salas y el jefe final te esperan, con 6 minutos y 3 vidas.' : 'Tu rival ya marcó su puntaje. Haz el mismo recorrido y trata de superarlo.'}</p>
+      <button class="btn ${color}" id="btnListo">Estoy listo</button>
+    </div>
+  `;
+  document.getElementById('btnListo').onclick = () => {
+    iniciarPartida(nombre, color, (sesion) => {
+      estado.resultados[jugador] = sesion;
+      if(jugador===1) pantallaIntermezzo(2);
+      else pantallaResultadoDuelo();
+    });
+  };
+}
+
+/* ===================== MOTOR DE PARTIDA (compartido) ===================== */
+
+/* ---- Sonidos simples generados en el navegador (sin archivos externos) ---- */
+let __audioCtx = null;
+function sonido(tipo){
+  try{
+    if(!__audioCtx) __audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const ctx = __audioCtx;
+    const ahora = ctx.currentTime;
+    function tono(freq, inicio, dur, vol, tipoOnda){
+      const osc = ctx.createOscillator(); const gain = ctx.createGain();
+      osc.type = tipoOnda||'sine'; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(vol, ahora+inicio);
+      gain.gain.exponentialRampToValueAtTime(0.001, ahora+inicio+dur);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(ahora+inicio); osc.stop(ahora+inicio+dur+0.02);
+    }
+    if(tipo==='correcto'){ tono(660,0,0.09,0.12); tono(990,0.09,0.12,0.12); }
+    else if(tipo==='incorrecto'){ tono(160,0,0.22,0.14,'sawtooth'); }
+    else if(tipo==='victoria'){ [523,659,784,1047].forEach((f,i)=>tono(f,i*0.12,0.18,0.12)); }
+    else if(tipo==='derrota'){ tono(300,0,0.2,0.12,'sawtooth'); tono(200,0.18,0.3,0.12,'sawtooth'); }
+    else if(tipo==='poder'){ tono(880,0,0.08,0.1); tono(1320,0.08,0.1,0.1); }
+    else if(tipo==='rugido'){ tono(90,0,0.5,0.16,'sawtooth'); tono(70,0.15,0.45,0.14,'sawtooth'); }
+  }catch(e){ /* audio no disponible, seguimos sin sonido */ }
+}
+
+const JEFE_FINAL = {
+  nombre: 'Discriminante, el Devorador de Fórmulas',
+  titulo: 'Guardián de la Cámara Final',
+  criatura: '🐉',
+  flavor: 'El suelo tiembla. Una bestia forjada de coeficientes olvidados bloquea la salida de la mazmorra — solo quien domine el discriminante y la fórmula general podrá derrotarla.',
+};
+
+function iniciarPartida(nombre, color, onFinish, opts){
+  opts = opts || {};
+  const epico = !!opts.epico;
+  const facil = !!opts.facil;
+  const vidasIniciales = facil ? VIDAS_INICIALES + 1 : VIDAS_INICIALES;
+  const sesion = {
+    sala:1, faseJefe:0, jefeSubIndice:0, introJefeMostrada:false, vidas:vidasIniciales, vidasMax:vidasIniciales, puntaje:0, aciertos:0, errores:0,
+    racha:0, rachaMax:0, tiempoRestante: DURACION_PARTIDA, victoria:false, bossEq:null,
+    epico, facil, powerupsUsados:0,
+    poderes: epico ? {pista:1, pausa:1, pocion:1, doble:1} : null,
+    dobleActivo:false,
+  };
+
+  function renderProgreso(){
+    let html = '';
+    for(let i=1;i<=5;i++){
+      const cls = i<sesion.sala ? 'hecho' : (i===sesion.sala ? 'actual' : '');
+      html += `<div class="paso ${cls}"></div>`;
+    }
+    const clsJefe = sesion.sala>5 ? (sesion.victoria?'hecho':'jefe') : '';
+    html += `<div class="paso ${clsJefe}"></div>`;
+    return html;
+  }
+
+  function renderBarraJefe(){
+    if(!epico || sesion.sala<=5) return '';
+    const totalSeg = 8;
+    const numCaidos = sesion.victoria ? 8 : (sesion.faseJefe===1 ? sesion.jefeSubIndice : 4+sesion.jefeSubIndice);
+    let segs = '';
+    for(let i=0;i<totalSeg;i++){ segs += `<div class="jefe-hp-seg ${i<numCaidos?'caido':''}"></div>`; }
+    return `
+      <div class="jefe-hp-wrap" id="jefeHpWrap">
+        <div class="jefe-hp-etiqueta"><span>👑 Vida del Jefe</span><span>Fase ${Math.min(sesion.faseJefe,2)}/2 · Golpe ${Math.min(numCaidos+1,8)}/8</span></div>
+        <div class="jefe-hp-fondo">${segs}</div>
+      </div>
+      <div class="dano-flotante" id="danoFlotante"></div>
+    `;
+  }
+
+  function renderPoderes(){
+    if(!epico) return '';
+    const p = sesion.poderes;
+    return `
+      <div class="poderes">
+        <button class="poder-btn" id="poderPista" ${p.pista<1?'disabled':''}><span class="emoji">🔍</span>Pista</button>
+        <button class="poder-btn" id="poderPausa" ${p.pausa<1?'disabled':''}><span class="emoji">⏱️</span>+15 seg</button>
+        <button class="poder-btn" id="poderPocion" ${p.pocion<1 || sesion.vidas>=sesion.vidasMax?'disabled':''}><span class="emoji">❤️</span>Poción</button>
+        <button class="poder-btn" id="poderDoble" ${p.doble<1 || sesion.dobleActivo?'disabled':''}><span class="emoji">✨</span>${sesion.dobleActivo?'Activo':'x2 puntos'}</button>
+      </div>
+    `;
+  }
+
+  function activarPoderes(){
+    if(!epico) return;
+    document.getElementById('poderPista').onclick = () => {
+      if(sesion.poderes.pista<1) return;
+      sesion.poderes.pista--; sesion.powerupsUsados++;
+      sonido('poder');
+      const div = document.createElement('div');
+      div.className = 'pista-texto';
+      div.textContent = generarPista(sesion._actual);
+      document.getElementById('tarjeta').appendChild(div);
+      document.getElementById('poderPista').disabled = true;
+    };
+    document.getElementById('poderPausa').onclick = () => {
+      if(sesion.poderes.pausa<1) return;
+      sesion.poderes.pausa--; sesion.powerupsUsados++;
+      sonido('poder');
+      sesion.tiempoRestante += 15;
+      document.getElementById('hudTiempo').textContent = formatoTiempo(sesion.tiempoRestante);
+      document.getElementById('poderPausa').disabled = true;
+    };
+    document.getElementById('poderPocion').onclick = () => {
+      if(sesion.poderes.pocion<1 || sesion.vidas>=sesion.vidasMax) return;
+      sesion.poderes.pocion--; sesion.powerupsUsados++;
+      sonido('poder');
+      sesion.vidas = Math.min(sesion.vidasMax, sesion.vidas+1);
+      document.querySelector('.hud-vidas').textContent = '❤️'.repeat(sesion.vidas) + '🖤'.repeat(sesion.vidasMax-sesion.vidas);
+      document.getElementById('poderPocion').disabled = true;
+    };
+    document.getElementById('poderDoble').onclick = () => {
+      if(sesion.poderes.doble<1 || sesion.dobleActivo) return;
+      sesion.poderes.doble--; sesion.powerupsUsados++; sesion.dobleActivo = true;
+      sonido('poder');
+      document.getElementById('poderDoble').textContent = 'Activo';
+      document.getElementById('poderDoble').disabled = true;
+    };
+  }
+
+  function generarPista(p){
+    if(p.tipoResp==='raices' || p.tipoResp==='punto'){
+      return `Pista: uno de los dos valores es ${p.respuesta[0]}.`;
+    }
+    if(p.tipoResp==='numero' || p.tipoResp==='decimal'){
+      const val = p.respuesta;
+      return `Pista: el resultado es ${val<0?'negativo':(val>0?'positivo':'cero')}, parte entera ${Math.trunc(val)}.`;
+    }
+    return 'Sin pista disponible para este problema.';
+  }
+
+  function render(){
+    const esJefeAhora = sesion.sala>5;
+    marco.innerHTML = `
+      <div class="hud">
+        <div class="hud-jugador"><span class="dot" style="background:var(--${color})"></span>${escapeHtml(nombre)}</div>
+        <div class="hud-vidas">${'❤️'.repeat(sesion.vidas)}${'🖤'.repeat(sesion.vidasMax-sesion.vidas)}</div>
+        <div class="hud-puntaje" style="color:var(--${color})">${sesion.puntaje} pts</div>
+        <div class="hud-tiempo" id="hudTiempo">${formatoTiempo(sesion.tiempoRestante)}</div>
+      </div>
+      <div class="progreso-salas">${renderProgreso()}</div>
+      <div class="barra-tiempo-fondo"><div class="barra-tiempo" id="barraTiempo" style="width:${sesion.tiempoRestante/DURACION_PARTIDA*100}%"></div></div>
+      ${esJefeAhora ? `<div class="jefe-banner">${JEFE_FINAL.criatura} Combate contra ${JEFE_FINAL.nombre}</div>` : ''}
+      ${renderBarraJefe()}
+      ${renderPoderes()}
+      <div class="racha" id="racha"></div>
+      <div id="zonaProblema"></div>
+    `;
+    activarPoderes();
+    siguienteProblema();
+  }
+
+  function generarProblemaActual(){
+    if(sesion.sala<=5) return GENERADORES_SALA[sesion.sala-1](sesion.facil);
+    const eq = generarEcuacionJefe(sesion.facil);
+    if(sesion.faseJefe===1) return problemaJefeFase1(eq, sesion.jefeSubIndice);
+    return problemaJefeFase2(eq, sesion.jefeSubIndice);
+  }
+
+  function siguienteProblema(){
+    const p = generarProblemaActual();
+    sesion._actual = p;
+    sesion._inicioMs = Date.now();
+    const esJefe = sesion.sala>5;
+    const zona = document.getElementById('zonaProblema');
+    zona.innerHTML = `
+      <div class="tarjeta-problema ${esJefe?'jefe':''}" id="tarjeta">
+        <div class="problema-etiqueta">${p.etiqueta} · vale ${p.puntos} pts</div>
+        <div class="problema-enunciado">${p.enunciado}</div>
+        ${p.nota ? `<div class="problema-nota">${p.nota}</div>` : ''}
+      </div>
+      <div class="zona-respuesta">
+        <input type="text" id="inputResp" autocomplete="off" placeholder="Escribe tu respuesta...">
+        <button id="btnResponder">Verificar</button>
+      </div>
+      <div class="respuesta-correcta-txt" id="textoCorrecta"></div>
+    `;
+    const input = document.getElementById('inputResp');
+    const boton = document.getElementById('btnResponder');
+    input.focus();
+    const enviar = () => responder(input.value);
+    boton.onclick = enviar;
+    input.onkeydown = (e) => { if(e.key==='Enter') enviar(); };
+  }
+
+  function terminar(){
+    limpiarTemporizador();
+    sonido(sesion.victoria ? 'victoria' : 'derrota');
+    onFinish(sesion);
+  }
+
+  function responder(textoUsuario){
+    const p = sesion._actual;
+    const input = document.getElementById('inputResp');
+    const boton = document.getElementById('btnResponder');
+    const tarjeta = document.getElementById('tarjeta');
+    if(input.disabled) return;
+    if(textoUsuario.trim()===''){ input.focus(); return; }
+
+    const ok = validarRespuesta(p, textoUsuario);
+    input.disabled = true; boton.disabled = true;
+    const esJefe = sesion.sala>5;
+
+    if(ok){
+      sonido('correcto');
+      const segundos = (Date.now()-sesion._inicioMs)/1000;
+      const bonoVelocidad = Math.max(0, Math.round(20 - segundos));
+      sesion.racha++;
+      sesion.rachaMax = Math.max(sesion.rachaMax, sesion.racha);
+      const bonoRacha = sesion.racha>=3 ? Math.min((sesion.racha-2)*15, 60) : 0;
+      let puntosGanados = p.puntos + bonoVelocidad + bonoRacha;
+      if(sesion.dobleActivo){ puntosGanados *= 2; sesion.dobleActivo = false; }
+      sesion.puntaje += puntosGanados;
+      sesion.aciertos++;
+      tarjeta.classList.add('correcto');
+      input.classList.add('correcto');
+      document.getElementById('racha').textContent = sesion.racha>=2 ? `🔥 Racha de ${sesion.racha}` : '';
+
+      if(esJefe){
+        const wrap = document.getElementById('jefeHpWrap');
+        if(wrap) wrap.classList.add('impacto');
+        const dano = document.getElementById('danoFlotante');
+        if(dano) dano.textContent = `¡Golpe certero! (${sesion.jefeSubIndice+1}/4 de esta fase)`;
+      }
+
+      // avanzar
+      if(sesion.sala<=5){
+        sesion.sala++;
+        if(sesion.sala>5){ sesion.faseJefe = 1; sesion.jefeSubIndice = 0; }
+      } else {
+        sesion.jefeSubIndice++;
+        if(sesion.jefeSubIndice>=4){
+          if(sesion.faseJefe===1){
+            sesion.faseJefe = 2;
+            sesion.jefeSubIndice = 0;
+          } else {
+            sesion.victoria = true;
+            sesion.puntaje += sesion.tiempoRestante*2 + sesion.vidas*50; // bono final
+            document.querySelector('.hud-puntaje').textContent = sesion.puntaje + ' pts';
+            setTimeout(terminar, 700);
+            return;
+          }
+        }
+      }
+    } else {
+      sonido('incorrecto');
+      sesion.racha = 0;
+      sesion.errores++;
+      sesion.vidas--;
+      tarjeta.classList.add('incorrecto');
+      input.classList.add('incorrecto');
+      document.getElementById('racha').textContent = '';
+      document.getElementById('textoCorrecta').innerHTML = `Respuesta correcta: <b>${escapeHtml(p.formatoCorrecta)}</b>`;
+      if(esJefe){
+        const dano = document.getElementById('danoFlotante');
+        if(dano) dano.textContent = `💥 ¡El jefe contraataca! −1 vida`;
+      }
+    }
+
+    document.querySelector('.hud-puntaje').textContent = sesion.puntaje + ' pts';
+    document.querySelector('.hud-vidas').textContent = '❤️'.repeat(sesion.vidas) + '🖤'.repeat(sesion.vidasMax-sesion.vidas);
+
+    if(!ok && sesion.vidas<=0){
+      setTimeout(terminar, 1300);
+      return;
+    }
+
+    const entrandoAlJefe = ok && sesion.sala===6 && sesion.faseJefe===1 && sesion.jefeSubIndice===0 && !sesion.introJefeMostrada;
+
+    setTimeout(()=>{
+      if(sesion.tiempoRestante<=0) return;
+      if(entrandoAlJefe){
+        sesion.introJefeMostrada = true;
+        pantallaIntroJefe(color, render);
+      } else {
+        render();
+      }
+    }, ok ? 550 : 1300);
+  }
+
+  render();
+
+  function tickReloj(){
+    sesion.tiempoRestante--;
+    const hud = document.getElementById('hudTiempo');
+    const barra = document.getElementById('barraTiempo');
+    if(hud) hud.textContent = formatoTiempo(sesion.tiempoRestante);
+    if(barra) barra.style.width = (sesion.tiempoRestante/DURACION_PARTIDA*100)+'%';
+    if(hud && sesion.tiempoRestante<=20) hud.classList.add('urgente');
+    if(sesion.tiempoRestante<=0){
+      terminar();
+    }
+  }
+  temporizadorId = setInterval(tickReloj, 1000);
+
+  function pantallaIntroJefe(colorTema, alContinuar){
+    limpiarTemporizador(); // pausa el reloj durante la escena dramática
+    sonido('rugido');
+    marco.innerHTML = `
+      <div class="jefe-intro">
+        <div class="grieta">⚠ La cámara final tiembla ⚠</div>
+        <div class="criatura">${JEFE_FINAL.criatura}</div>
+        <div class="nombre-jefe">${JEFE_FINAL.nombre}</div>
+        <div class="titulo-jefe">${JEFE_FINAL.titulo}</div>
+        <div class="flavor">${JEFE_FINAL.flavor}</div>
+        <div class="stats-jefe">
+          <div class="stat-chip">🩸 8 golpes para vencerlo</div>
+          <div class="stat-chip">🎭 2 fases</div>
+          <div class="stat-chip">❤️ Tus vidas: ${sesion.vidas}/${sesion.vidasMax}</div>
+        </div>
+      </div>
+      <button class="btn combate" id="btnEnfrentar">⚔️ ¡Enfréntalo!</button>
+    `;
+    document.getElementById('btnEnfrentar').onclick = () => {
+      temporizadorId = setInterval(tickReloj, 1000); // reanuda el reloj
+      alContinuar();
+    };
+  }
+}
+
+/* ===================== RESULTADOS ===================== */
+
+function descripcionProgreso(sesion){
+  if(sesion.victoria) return 'Venciste al Jefe Final';
+  if(sesion.sala<=5) return `Llegaste a la Sala ${sesion.sala} de 5`;
+  return `Caíste en el Jefe Final (Fase ${sesion.faseJefe}, pregunta ${sesion.jefeSubIndice+1} de 4)`;
+}
+
+// "Coeficiente Cuadrático" — puntaje simbólico de diversión (no es un test de IQ real)
+function calcularIQ(sesion){
+  const totalResp = sesion.aciertos + sesion.errores;
+  const precision = totalResp>0 ? sesion.aciertos/totalResp : 0;
+  let iq = 90 + precision*40 + Math.min(sesion.rachaMax,10)*1.5 - sesion.errores*1.5 + (sesion.victoria?12:0);
+  iq = Math.max(75, Math.min(160, Math.round(iq)));
+  let etiqueta;
+  if(iq<90) etiqueta = 'Aprendiz en entrenamiento 🌱';
+  else if(iq<105) etiqueta = 'Pensador sólido 📘';
+  else if(iq<120) etiqueta = 'Mente ágil ⚡';
+  else if(iq<135) etiqueta = 'Genio matemático 🧠';
+  else etiqueta = 'Leyenda de las cuadráticas 👑';
+  return {iq, etiqueta};
+}
+
+function tarjetaIQHTML(sesion){
+  const r = calcularIQ(sesion);
+  return `
+    <div class="tarjeta-iq">
+      <div class="k">Coeficiente Cuadrático</div>
+      <div class="valor">${r.iq}</div>
+      <div class="etiqueta">${r.etiqueta}</div>
+      <div class="nota">*Puntaje simbólico y de diversión, no es un test de inteligencia real.</div>
+    </div>
+  `;
+}
+
+function calcularLogros(sesion){
+  const logros = [];
+  if(sesion.victoria && sesion.errores===0) logros.push({e:'🎯', t:'Precisión perfecta — venciste sin ningún error'});
+  if(sesion.victoria && sesion.vidas===sesion.vidasMax) logros.push({e:'🛡️', t:'Invicto — no perdiste ni una vida'});
+  if(sesion.rachaMax>=6) logros.push({e:'🔥', t:`Racha imparable — ${sesion.rachaMax} respuestas seguidas`});
+  if(sesion.victoria && sesion.tiempoRestante > DURACION_PARTIDA*0.5) logros.push({e:'⚡', t:'Velocista — venciste con más de la mitad del tiempo restante'});
+  if(sesion.victoria && (sesion.powerupsUsados||0)===0 && sesion.epico) logros.push({e:'💪', t:'Sin ayuda — venciste sin usar ningún poder'});
+  if(!sesion.victoria && sesion.aciertos>=5) logros.push({e:'🩹', t:'Casi lo logras — llegaste muy cerca del Jefe Final'});
+  if(logros.length===0) logros.push({e:'📖', t:'Cada intento suma experiencia. ¡Vuelve a intentarlo!'});
+  return logros;
+}
+
+function logrosHTML(sesion){
+  return `<div class="logros">${calcularLogros(sesion).map(l=>`<div class="logro-item"><span class="emoji">${l.e}</span><span>${escapeHtml(l.t)}</span></div>`).join('')}</div>`;
+}
+
+function pantallaResultadoAventura(nombre, sesion){
+  marco.innerHTML = `
+    <div class="resultado-corona">${sesion.victoria ? '🏆' : '💀'}</div>
+    <div class="resultado-titulo">${sesion.victoria ? '¡Venciste la mazmorra!' : 'La mazmorra te detuvo'}</div>
+    <div class="resultado-sub">${descripcionProgreso(sesion)}</div>
+
+    <div class="tabla-resultado">
+      <div class="tarjeta-jugador ganador">
+        <div class="nombre" style="color:var(--p1)">${escapeHtml(nombre)}</div>
+        <div class="puntaje">${sesion.puntaje}</div>
+        <div class="detalle">
+          <b>${sesion.aciertos}</b> aciertos · <b>${sesion.errores}</b> errores<br>
+          Racha máxima: <b>${sesion.rachaMax}</b><br>
+          Vidas restantes: <b>${sesion.vidas}</b>
+        </div>
+      </div>
+    </div>
+
+    ${tarjetaIQHTML(sesion)}
+
+    <div class="botonera">
+      <button class="btn secundario" id="btnMenu">Menú principal</button>
+      <button class="btn" id="btnRevancha">Intentar de nuevo</button>
+    </div>
+  `;
+  document.getElementById('btnMenu').onclick = pantallaMenuPrincipal;
+  document.getElementById('btnRevancha').onclick = pantallaInicioAventura;
+}
+
+function pantallaResultadoEpico(nombre, sesion){
+  marco.innerHTML = `
+    <div class="resultado-corona">${sesion.victoria ? '🏆' : '💀'}</div>
+    <div class="resultado-titulo">${sesion.victoria ? '¡Venciste la mazmorra épica!' : 'El jefe te detuvo'}</div>
+    <div class="resultado-sub">${descripcionProgreso(sesion)}</div>
+
+    <div class="tabla-resultado">
+      <div class="tarjeta-jugador ganador">
+        <div class="nombre" style="color:var(--p1)">${escapeHtml(nombre)}</div>
+        <div class="puntaje">${sesion.puntaje}</div>
+        <div class="detalle">
+          <b>${sesion.aciertos}</b> aciertos · <b>${sesion.errores}</b> errores<br>
+          Racha máxima: <b>${sesion.rachaMax}</b><br>
+          Vidas restantes: <b>${sesion.vidas}</b> · Poderes usados: <b>${sesion.powerupsUsados}</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="problema-etiqueta" style="text-align:left;margin-bottom:8px;">🏅 Logros obtenidos</div>
+    ${logrosHTML(sesion)}
+
+    ${tarjetaIQHTML(sesion)}
+
+    <div class="botonera">
+      <button class="btn secundario" id="btnMenu">Menú principal</button>
+      <button class="btn" id="btnRevancha">Intentar de nuevo</button>
+    </div>
+  `;
+  document.getElementById('btnMenu').onclick = pantallaMenuPrincipal;
+  document.getElementById('btnRevancha').onclick = pantallaInicioEpico;
+}
+
+function pantallaResultadoDuelo(){
+  const r1 = estado.resultados[1], r2 = estado.resultados[2];
+  const empate = r1.puntaje === r2.puntaje;
+  const ganador1 = r1.puntaje > r2.puntaje;
+  const iq1 = calcularIQ(r1), iq2 = calcularIQ(r2);
+
+  marco.innerHTML = `
+    <div class="resultado-corona">${empate ? '🤝' : '🏆'}</div>
+    <div class="resultado-titulo">${empate ? '¡Empate legendario!' : `${escapeHtml(ganador1?estado.nombre1:estado.nombre2)} gana el duelo`}</div>
+    <div class="resultado-sub">${empate ? 'Ambos retadores demostraron el mismo dominio de las cuadráticas.' : 'La mazmorra reconoce a su campeón.'}</div>
+
+    <div class="tabla-resultado">
+      <div class="tarjeta-jugador ${!empate && ganador1 ? 'ganador':''}">
+        <div class="nombre" style="color:var(--p1)">${escapeHtml(estado.nombre1)}</div>
+        <div class="puntaje">${r1.puntaje}</div>
+        <div class="detalle">
+          ${descripcionProgreso(r1)}<br>
+          <b>${r1.aciertos}</b> aciertos · <b>${r1.errores}</b> errores<br>
+          Racha máxima: <b>${r1.rachaMax}</b>
+        </div>
+      </div>
+      <div class="tarjeta-jugador ${!empate && !ganador1 ? 'ganador':''}">
+        <div class="nombre" style="color:var(--p2)">${escapeHtml(estado.nombre2)}</div>
+        <div class="puntaje">${r2.puntaje}</div>
+        <div class="detalle">
+          ${descripcionProgreso(r2)}<br>
+          <b>${r2.aciertos}</b> aciertos · <b>${r2.errores}</b> errores<br>
+          Racha máxima: <b>${r2.rachaMax}</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="tarjeta-iq doble">
+      <div class="lado">
+        <div class="k">${escapeHtml(estado.nombre1)}</div>
+        <div class="valor" style="color:var(--p1)">${iq1.iq}</div>
+        <div class="etiqueta">${iq1.etiqueta}</div>
+      </div>
+      <div class="lado">
+        <div class="k">${escapeHtml(estado.nombre2)}</div>
+        <div class="valor" style="color:var(--p2)">${iq2.iq}</div>
+        <div class="etiqueta">${iq2.etiqueta}</div>
+      </div>
+    </div>
+    <div class="tarjeta-iq" style="padding:6px;margin-top:-14px;background:none;border:none;">
+      <div class="nota">*Coeficiente Cuadrático: puntaje simbólico y de diversión, no es un test de inteligencia real.</div>
+    </div>
+
+    <div class="botonera">
+      <button class="btn secundario" id="btnMenu">Menú principal</button>
+      <button class="btn" id="btnRevancha">Revancha</button>
+    </div>
+  `;
+  document.getElementById('btnMenu').onclick = pantallaMenuPrincipal;
+  document.getElementById('btnRevancha').onclick = () => pantallaIntermezzo(1);
+}
+
+/* ===================== UTIL ===================== */
+function formatoTiempo(s){
+  const m = Math.floor(s/60), r = s%60;
+  return `${m}:${String(r).padStart(2,'0')}`;
+}
+function escapeHtml(s){
+  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+
+pantallaMenuPrincipal();
 </script>
 </body>
 </html>
